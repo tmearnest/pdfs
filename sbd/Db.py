@@ -1,5 +1,5 @@
 import sqlite3, unidecode, logging, os
-from Metadata import Article
+from .Metadata import Article
 
 log = logging.getLogger(__name__)
 
