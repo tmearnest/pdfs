@@ -61,6 +61,20 @@ class Search:
             else:
                 return None
 
+    def listAll(self):
+        with self.ix.searcher() as searcher:
+            results = []
+            for hit in  searcher.documents(kind='bib'):
+                results.append(dict(
+                    key=hit['key'],
+                    authors=hit['authors'],
+                    title=hit['title'],
+                    year=hit['year'],
+                    pub=hit['pub'],
+                    doi=hit['doi']))
+
+        return results
+
     def search(self, term):
         with self.ix.searcher() as searcher:
             q = wq.Term("kind", "page") & wqp.QueryParser("text", self.ix.schema).parse(term)

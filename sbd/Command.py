@@ -1,8 +1,13 @@
+import inotify.adapters
 import os, argparse, shutil
 import termcolor as tc
 from .Pdf import *
 from .Doi import *
 from .Search import *
+
+class PdfExistsError(Exception):
+    pass
+
 
 def dbInit(args):
     dirs = args.dirs
@@ -16,6 +21,32 @@ def dbInit(args):
     Search.initialize(dirs.index)
     print("initialized new database at: "+dirs.root)
 
+
+
+def dbWatch(args):
+    wd = args.watchDir.encode()
+    inot = inotify.adapters.Inotify()
+
+    inot.add_watch(wd)
+    try:
+        for event in inot.event_gen():
+            if event is not None:
+                header, type_names, watch_path, filename = event
+                if 'IN_CREATE' in type_names:
+                    newFile = filename.decode("utf-8")
+                    print("new file: ", newFile)
+                    args.file = newFile
+                    args.doi = None
+                    try:
+                        dbAdd(args)
+                    except (PdfExistsError, AbortException):
+                        pass
+    except KeyboardInterrupt:
+        pass
+    finally:
+        inot.remove_watch(wd)
+
+
 def dbAdd(args):
     fname = args.file
     dirs = args.dirs
@@ -26,7 +57,7 @@ def dbAdd(args):
     key = s.findByMd5(md5)
     if key:
         print("File already in db under key {}".format(key))
-        sys.exit(1)
+        raise PdfExistsError
     txt = getPdfTxt(fname)
 
     if args.doi is not None:

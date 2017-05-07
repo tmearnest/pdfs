@@ -1,6 +1,8 @@
 import os, argparse
 from . import *
 from . Command import *
+from . WwwApp import *
+from . Watch import *
 
 def main():
     if "VIRTUAL_ENV" in os.environ:
@@ -38,6 +40,15 @@ def main():
     sp.set_defaults(func=dbSearch)
     sp.set_defaults(dirs=dirs)
 
+    sp = subparsers.add_parser('watch', help="Add new pdfs added to a dir")
+    sp.add_argument('watchDir', type=str, help='Directory to watch')
+    sp.set_defaults(func=dbWatch)
+    sp.set_defaults(dirs=dirs)
+
+    sp = subparsers.add_parser('www', help="Start webserver")
+    sp.set_defaults(func=launchWWW)
+    sp.set_defaults(dirs=dirs)
+
     sp = subparsers.add_parser('bibtex', help="Get BibTeX")
     g = sp.add_mutually_exclusive_group(required=True)
     g.add_argument("--all", "-a", help="Dump all entries", action="store_true")
@@ -46,11 +57,12 @@ def main():
     sp.set_defaults(dirs=dirs)
 
     args = parser.parse_args()
+    args.func(args)
 
     try:
         args.func(args)
-    except AttributeError:
-        parser.print_usage()
+    except AbortException:
+        perror("Aborted")
         sys.exit(1)
 
 if __name__ == "__main__":

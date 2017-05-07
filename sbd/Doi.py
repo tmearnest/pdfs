@@ -6,6 +6,9 @@ import textwrap
 
 from . import *
 
+class AbortException(Exception):
+    pass
+
 
 from pybtex.backends import BaseBackend
 
@@ -166,7 +169,7 @@ def selectDoi(txt, fname):
                 choice = prompt("Choose correct reference for " + os.path.basename(fname), "".join(str(x+1) for x in range(len(bibChunk))) + "n" + "q")
 
                 if choice.lower() == 'q':
-                    sys.exit()
+                    raise AbortException
                 if choice.lower() == 'n':
                     choice = None
                     break
