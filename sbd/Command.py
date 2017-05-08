@@ -5,6 +5,9 @@ from .Pdf import *
 from .Doi import *
 from .Search import *
 
+def _stripAnsi(s):
+    return re.sub(r'\x1b[^m]*m', ' ', s)
+
 class PdfExistsError(Exception):
     pass
 
@@ -38,7 +41,7 @@ def dbWatch(args):
                     args.file = newFile
                     args.doi = None
                     try:
-                        dbAdd(args)
+                        _dbAdd(args)
                     except (PdfExistsError, AbortException):
                         pass
     except KeyboardInterrupt:
@@ -48,6 +51,14 @@ def dbWatch(args):
 
 
 def dbAdd(args):
+    try:
+        _dbAdd(args)
+    except PdfExistsError:
+        sys.exit(1)
+    except AbortException:
+        sys.exit(1)
+
+def _dbAdd(args):
     fname = args.file
     dirs = args.dirs
     s = Search(dirs.index)
@@ -56,7 +67,7 @@ def dbAdd(args):
 
     key = s.findByMd5(md5)
     if key:
-        print("File already in db under key {}".format(key))
+        perror("File already in db under key {}".format(key))
         raise PdfExistsError
     txt = getPdfTxt(fname)
 
@@ -96,30 +107,54 @@ def dbSearch(args):
     dirs = args.dirs
     s = Search(dirs.index)
 
-    firstLine = True
+    if args.text:
+        firstLine = True
 
-    for r in s.search(' '.join(args.terms)):
-        bib = parse_string(r['bibtex'], "bibtex")
-        keys = [bib.entries[bib.entries.keys()[0]].key]
-        if firstLine:
-            firstLine = False
+        for r in s.search(' '.join(args.terms)):
+            bib = parse_string(r['bibtex'], "bibtex")
+            keys = [bib.entries[bib.entries.keys()[0]].key]
+            if firstLine:
+                firstLine = False
+            else:
+                print()
+                print("="*80)
+                print()
+
+            print(formatBibEntries(bib, keys, show_numbers=False))
+            print()
+
+            for score,page,context in zip(r['pageScores'], r['pages'], r['text']):
+                print("page " + tc.colored(str(page+1), "yellow") + ", score " + tc.colored(" {:.3f}".format(score), "blue"))
+                print(context)
+                print()
+
+            pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, keys[0] + ".pdf"))
+            print(tc.colored(pth, "green"))
+    else:
+        if args.title:
+            key = 'title'
+        elif args.year:
+            key = 'year'
+        elif args.doi:
+            key = "doi"
+        elif args.journal:
+            key = "pub"
+        elif args.author:
+            key = "authors"
+        elif args.cite_key:
+            key = "key"
         else:
+            raise RuntimeError
+
+        keys = ['key', 'bibtex', 'authors', 'title', 'year', 'pub', 'doi']
+        w = max(len(k) for k in keys) + 2
+        for r in s.searchKey(key, ' '.join(args.terms)):
+            pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, _stripAnsi(r['key']) + ".pdf"))
+            print(tc.colored(pth, "green"))
+            for k in ['key', 'authors', 'title', 'year', 'pub', 'doi']:
+                print(tc.colored("{s:<{w}s}".format(s=k,w=w), "blue"),  end='')
+                print(textwrap.fill(str(r[k]).strip(), width=80, initial_indent="", subsequent_indent=" "*w ))
             print()
-            print("="*80)
-            print()
-
-        print(formatBibEntries(bib, keys, show_numbers=False))
-        print()
-
-        for score,page,context in zip(r['pageScores'], r['pages'], r['text']):
-            print("page " + tc.colored(str(page+1), "yellow") + ", score " + tc.colored(" {:.3f}".format(score), "blue"))
-            print(context)
-            print()
-
-        pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, keys[0] + ".pdf"))
-        print(tc.colored(pth, "green"))
-
-
 
 
 def dbBib(args):

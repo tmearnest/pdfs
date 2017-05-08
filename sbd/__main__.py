@@ -12,13 +12,12 @@ def main():
 
     class Dirs:
         pass
-    dirs = Dirs()
 
+    dirs = Dirs()
 
     dirs.root = dbDir
     dirs.index = os.path.join(dbDir, "index")
     dirs.pdf = os.path.join(dbDir, "pdf")
-
 
     parser = argparse.ArgumentParser()
     parser = argparse.ArgumentParser(description="Bibliography database manipulation")
@@ -37,6 +36,14 @@ def main():
 
     sp = subparsers.add_parser('search', help="Fulltext search")
     sp.add_argument('terms', type=str, nargs='+', help='Search string')
+    g = sp.add_mutually_exclusive_group(required=True)
+    g.add_argument("--text", "-t", help="Search body text", action="store_true")
+    g.add_argument("--title", "-T", help="Search titles", action="store_true")
+    g.add_argument("--year", "-Y", help="Search years", action="store_true")
+    g.add_argument("--doi", "-D", help="Search dois", action="store_true")
+    g.add_argument("--author", "-A", help="Search authors", action="store_true")
+    g.add_argument("--journal", "-J", help="Search journals", action="store_true")
+    g.add_argument("--cite-key", "-K", help="Search citation key", action="store_true")
     sp.set_defaults(func=dbSearch)
     sp.set_defaults(dirs=dirs)
 
@@ -57,7 +64,6 @@ def main():
     sp.set_defaults(dirs=dirs)
 
     args = parser.parse_args()
-    args.func(args)
 
     try:
         args.func(args)

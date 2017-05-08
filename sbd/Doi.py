@@ -194,9 +194,9 @@ def doiEntry(fname):
             return None, None
         else:
             bibData = doi2bibtex(doi)
-            print(formatBibEntries(bibData['bibCollection'], [bibData['key']], show_number=False))
+            print(formatBibEntries(bibData['bibCollection'], [bibData['key']], show_numbers=False))
 
-            response = choice("OK" , "yn")
+            response = prompt("OK" , "yn")
             if response.lower() == 'y':
-                return bib, doi
+                return bibData
 

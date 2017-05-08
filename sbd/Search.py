@@ -6,6 +6,9 @@ import whoosh.highlight as highlight
 import termcolor as tc
 import textwrap
 
+
+
+
 class ANSIFormatter(highlight.Formatter):
     def format_token(self, text, token, replace=False):
         tokentext = highlight.get_text(text, token, replace)
@@ -13,6 +16,17 @@ class ANSIFormatter(highlight.Formatter):
 
     def format(self, fragments, replace=False):
         return textwrap.fill(super().format(fragments, replace), width=80, initial_indent="   ", subsequent_indent="   ")
+
+
+
+def _formatterFactory(fmt):
+    if fmt.lower() == 'ansi':
+        return ANSIFormatter()
+    elif fmt.lower() == 'html':
+        return highlight.HtmlFormatter()
+    else:
+        raise NotImplementedError
+
 
 class Search:
     @staticmethod
@@ -75,12 +89,29 @@ class Search:
 
         return results
 
-    def search(self, term):
+    def searchKey(self, key, term, formatter="ansi"):
+        with self.ix.searcher() as searcher:
+            q = wq.Term("kind", "bib") & wqp.QueryParser(key, self.ix.schema).parse(term)
+            results = searcher.search(q, limit=None)
+            results.fragmenter = highlight.WholeFragmenter()
+            results.formatter = _formatterFactory(formatter)
+            rs = []
+            for hit in results:
+                r = dict(score=hit.score)
+                for k in ['key', 'bibtex', 'authors', 'title', 'year', 'pub', 'doi']:
+                    if key == k:
+                        r[k] = ' '.join(hit.highlights(k).split())
+                    else:
+                        r[k] = hit[k]
+                rs.append(r)
+            return sorted(rs, key=lambda x: -x['score'])
+
+    def search(self, term, formatter='ansi'):
         with self.ix.searcher() as searcher:
             q = wq.Term("kind", "page") & wqp.QueryParser("text", self.ix.schema).parse(term)
             pgResults = searcher.search(q, limit=None)
             pgResults.fragmenter.charlimit = None
-            pgResults.formatter = ANSIFormatter()
+            pgResults.formatter = _formatterFactory(formatter)
             pgDict = {}
 
             for hit in pgResults:

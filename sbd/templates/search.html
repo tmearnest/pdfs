@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>SBD</title>
+  </head>
+  <body>
+      <form action='/search'>
+          <select name='q'>
+              <option value="text">Full text</option>
+              <option value="title">Title</option>
+              <option value="authors">Author</option>
+              <option value="pub">Journal</option>
+              <option value="year">Year</option>
+          </select>
+          <input type="text" name="t">
+          <input type="submit" value="Submit">
+     </form>
+     {% if textSearch %}
+         {% for p in textSearch %}
+             <table>
+                 <tr>
+                     <td>{{p.score}}</td>
+                     <td><a href="/{{p.key}}.pdf"><tt>{{p.key}}</tt></a></td>
+                     <td>{{p.authors}}</td>
+                     <td>{{p.year}}</td>
+                     <td>{{p.title}}</td>
+                     <td><i>{{p.pub}}</i></td>
+                     <td><a href="http://dx.doi.org/{{p.doi}}">{{p.doi}}</a></td>
+                 </tr>
+             </table>
+             {% for i in range(p.pages|length) %}
+                page {{p.pages[i]}}, score {{p.score[i]}} <br/>
+                {{p.text[i]|safe}}
+             {% endfor %}
+         {% endfor %}
+     {% endif %}
+     {% if keySearch %}
+     <table>
+         {% for p in keySearch %}
+         <tr>
+            <td><a href="/{{p.key}}.pdf"><tt>{{p.key}}</tt></a></td>
+            <td>{{p.authors|safe}}</td>
+            <td>{{p.year|safe}}</td>
+            <td>{{p.title|safe}}</td>
+            <td>{{p.pub|safe}}</td>
+            <td><a href="http://dx.doi.org/{{p.doi}}">{{p.doi}}</a></td>
+        </tr>
+        {% endfor %}
+     </table>
+     {% endif %}
+  </body>
+</html>
