@@ -1,7 +1,17 @@
+from pybtex.database import parse_string, BibliographyData
+from pybtex.backends.html import Backend
+from pybtex.style.formatting.unsrt import Style as Unsrt
+
 import flask
-import os
+import os, io
 from . import *
-from . Search import Search
+from . Db import DB
+
+
+class HtmlBackend(Backend):
+    def write_entry(self, key, label, text):
+        self.output('<dt><a href="/{key}.pdf">{key}</a></dt>\n'.format(key=key))
+        self.output('<dd>{text}</dd>\n'.format(text=text))
 
 def launchWWW(args):
     dirs = args.dirs
@@ -16,21 +26,16 @@ def launchWWW(args):
 
     @flaskApp.route('/')
     def listFiles():
-        s = Search(dirs.index)
-        return flask.render_template("index.html", results=s.listAll())
-
-    @flaskApp.route('/search')
-    def search():
-        req = flask.request
-        textSearch, keySearch = None, None
-        if 'q' in req.args and 't' in req.args:
-            s = Search(dirs.index)
-            if req.args['q'] == 'text':
-                textSearch = s.search(req.args['t'], formatter='html')
-            elif req.args['q']  in ['title', 'year', "doi", "pub", "authors", "key"]:
-                keySearch = s.searchKey(req.args['q'], req.args['t'], formatter='html')
-            else:
-                raise ValueError("Invalid search term")
-        return flask.render_template("search.html", textSearch=textSearch, keySearch=keySearch)
+        db = DB(dirs.db)
+        style = Unsrt()
+        bdb = db.getAll()
+        keys = list(bdb.entries.keys())
+        formatted_bibliography = style.format_bibliography(bdb, keys)
+        f = io.StringIO()
+        be = HtmlBackend(None)
+        be.write_to_stream(formatted_bibliography, f)
+        resp = flask.make_response(f.getvalue())
+        resp.content_type = 'text/html'
+        return resp
 
     flaskApp.run()

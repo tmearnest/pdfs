@@ -1,4 +1,3 @@
-import requests
 from pybtex.database import parse_string, BibliographyData
 from pybtex.style.formatting.unsrt import Style as Unsrt
 import re, io, os
@@ -8,7 +7,6 @@ from . import *
 
 class AbortException(Exception):
     pass
-
 
 from pybtex.backends import BaseBackend
 
@@ -66,55 +64,12 @@ def prompt(txt, options=None, validate=None):
             perror("Invalid input")
 
 
-def doi2bibtex(doi):
-    url = 'http://dx.doi.org/{}'.format(doi)
-    headers = {'accept': 'application/x-bibtex'}
-    r = requests.get(url, headers=headers)
-    txt = '\n'.join(x for x in r.text.splitlines() if not re.search(r"^\s*(link|url)\s*=",x, re.I))
-    db = parse_string(txt, "bibtex")
-
-    for key,e in db.entries.items():
-        try:
-            firstAuthor = "".join(e.persons['author'][0].last_names)
-            authors = '; '.join(' '.join(p.first_names) + ' ' + ' '.join(p.last_names) for p in e.persons['author'])
-        except KeyError:
-            return None
-        year = e.fields['year'] or "0"
-        title = e.fields.get('title') or e.fields.get("booktitle") 
-
-        if title is None:
-            return None
-
-        pub = e.fields.get('journal') or e.fields.get('booktitle') or e.type
-
-        suffix = ''
-        for word in title.split(' '):
-            for ch in word:
-                if ch.isalnum():
-                    suffix += ch
-                    break
-            if len(suffix) == 3:
-                break
-        citekey = '{}{}{}'.format(firstAuthor, year, suffix.lower())
-        e.key = citekey
-        db1 = BibliographyData()
-        db1.add_entry(citekey, e)
-
-        return dict(doi=doi, 
-                    bibObj=e, 
-                    bibCollection=db1,
-                    key=citekey, 
-                    authors=authors, 
-                    title=title, 
-                    year=int(year), 
-                    pub=pub)
-
-
 def rekey(bib, citekey):
-    bib['bibObj'].key = citekey
-    bib['bibCollection'] = BibliographyData()
-    bib['bibCollection'].add_entry(citekey, bibObj['bibObj'])
-    return bib
+    ent = bib.entries[bib.entries.keys()[0]]
+    ent.key = citekey
+    bib2 = BibliographicData()
+    bib2.add_entry(citekey, ent)
+    return bib2
 
 
 def extractDois(txt):
@@ -133,14 +88,14 @@ def formatBibEntries(bdb, keys, show_numbers=True, show_keys=True):
     be.write_to_stream(formatted_bibliography, f)
     return f.getvalue()
 
-def selectDoi(txt, fname):
+def selectDoi(txt, fname, doiLookup):
     dois = extractDois(txt)
     maxChoices = 5
 
     def chunker():
         lst = []
         for doi in dois:
-            obj = doi2bibtex(doi)
+            obj = doiLookup(doi)
             if obj is not None:
                 lst.append(obj)
             if len(lst)==maxChoices:
@@ -159,8 +114,9 @@ def selectDoi(txt, fname):
 
         bibs, keys = BibliographyData(), []
         for i,bib in enumerate(bibChunk):
-            bibs.add_entry(bib['key'], bib['bibObj'])
-            keys.append(bib['key'])
+            k = bib.entries.keys()[0]
+            bibs.add_entry(k, bib.entries[k])
+            keys.append(k)
         print(formatBibEntries(bibs, keys))
 
         choice = None
@@ -186,14 +142,18 @@ def selectDoi(txt, fname):
     return None
 
 
-def doiEntry(fname):
+def doiEntry(fname, doiLookup):
     while True:
         doi = prompt("Enter DOI for {} ".format(os.path.basename(fname)))
 
         if len(doi) == 0:
-            return None, None
+            raise AbortException
         else:
-            bibData = doi2bibtex(doi)
+            bibData = doiLookup(doi)
+            if bibData is None:
+                pinfo("Doi not found.")
+                continue
+
             print(formatBibEntries(bibData['bibCollection'], [bibData['key']], show_numbers=False))
 
             response = prompt("OK" , "yn")
