@@ -7,6 +7,21 @@ from unidecode import unidecode
 from . import *
 import pypandoc
 
+
+def concatBibliography(bibs):
+    db = BibliographyData()
+    keys = set()
+    for bib in bibs:
+        for key,entry in bib.entries.items():
+            if key in keys:
+                raise RuntimeError("duplicate keys found")
+            else:
+                db.add_entry(key, entry)
+    return db
+
+
+
+
 class DoiLookup:
     def __init__(self, cacheFile):
         self.cacheFile = cacheFile

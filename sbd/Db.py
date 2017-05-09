@@ -276,7 +276,7 @@ class DB:
                 bib.persons['editor'] = [Person(" ".join(ns)) for ns in d['editors']]
 
             for k,v in d.items():
-                if k not in ['authors', 'editors', 'entryType', 'citeKey', 'id', 'pdfMd5']:
+                if k not in ['authors', 'editors', 'addDate', 'entryType', 'citeKey', 'id', 'pdfMd5']:
                     if v is not None:
                         bib.fields[k] = v
             db.add_entry(d['citeKey'], bib)

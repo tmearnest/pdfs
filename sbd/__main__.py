@@ -70,7 +70,7 @@ def main():
     sp = subparsers.add_parser('bibtex', help="Get BibTeX")
     g = sp.add_mutually_exclusive_group(required=True)
     g.add_argument("--all", "-a", help="Dump all entries", action="store_true")
-    g.add_argument("--key", "-k", metavar='CITE_KEY', help="Dump only the following cite keys", nargs='+', default=[])
+    g.add_argument("--keys", "-k", metavar='CITE_KEY', help="Dump only the following cite keys", nargs='+', default=[])
     sp.set_defaults(func=dbBib)
     sp.set_defaults(dirs=dirs)
 

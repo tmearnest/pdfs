@@ -7,7 +7,7 @@ from .Pdf import *
 from .Doi import *
 from .Search import *
 from .Db import DB
-from .Metadata import DoiLookup
+from .Metadata import DoiLookup, concatBibliography
 from pybtex.database import parse_file
 
 def _stripAnsi(s):
@@ -185,7 +185,7 @@ def dbBib(args):
     if args.all:
         bd = db.getAll()
     else:
-        raise NotImplementedError
+        bd = concatBibliography([db.lookup('citeKey', k) for k in args.keys])
 
     print(bd.to_string("bibtex"))
 
