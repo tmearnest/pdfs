@@ -48,6 +48,7 @@ def main():
     g.add_argument("--editor", "-E", help="Search editor", action="store_true")
     g.add_argument("--journal", "-J", help="Search journals", action="store_true")
     g.add_argument("--cite-key", "-K", help="Search citation key", action="store_true")
+    sp.add_argument("--no-context", action='store_true', help="Do not print context of full text match")
     sp.set_defaults(func=dbSearch)
     sp.set_defaults(dirs=dirs)
 

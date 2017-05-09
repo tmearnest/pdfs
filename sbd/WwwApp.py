@@ -10,7 +10,7 @@ from . Db import DB
 
 class HtmlBackend(Backend):
     def write_entry(self, key, label, text):
-        self.output('<dt><a href="/{key}.pdf">{key}</a></dt>\n'.format(key=key))
+        self.output('<dt><a href="/{key}.pdf" target="_blank">{key}</a></dt>\n'.format(key=key))
         self.output('<dd>{text}</dd>\n'.format(text=text))
 
 def launchWWW(args):

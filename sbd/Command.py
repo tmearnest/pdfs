@@ -131,26 +131,28 @@ def dbSearch(args):
 
         for key, pages in s.search(terms):
             bib = db.lookup('citeKey', key)
-            if firstLine:
-                firstLine = False
-            else:
-                print()
-                print("="*80)
-                print()
+            if not args.no_context:
+                if firstLine:
+                    firstLine = False
+                else:
+                    print()
+                    print("="*80)
+                    print()
 
             print(formatBibEntries(bib, [key], show_numbers=False))
-            print()
-
-            for r in pages:
-                page = r['page']
-                context = r['text']
-                score = r['score']
-                print("page " + tc.colored(str(page+1), "yellow") + ", score " + tc.colored(" {:.3f}".format(score), "blue"))
-                print(context)
+            if not args.no_context:
                 print()
 
-            pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, key + ".pdf"))
-            print(tc.colored(pth, "green"))
+                for r in pages:
+                    page = r['page']
+                    context = r['text']
+                    score = r['score']
+                    print("page " + tc.colored(str(page+1), "yellow") + ", score " + tc.colored(" {:.3f}".format(score), "blue"))
+                    print(context)
+                    print()
+
+                pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, key + ".pdf"))
+                print(tc.colored(pth, "green"))
         return
 
     if args.tag:
@@ -204,7 +206,9 @@ def dbEdit(args):
         perror("not modified")
         sys.exit(0)
     collection = parse_file(tmpfname)
-    db.modBibtex(args.key, collection)
+    newKey = collection.entries.keys()[0]
+    db.modBibtex(oldKey, collection)
+    shutil.move(os.path.join(dirs.pdf, oldKey+".pdf"), os.path.join(dirs.pdf, newKey+".pdf"))
 
 
 def dbModTags(args):

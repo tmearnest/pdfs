@@ -154,7 +154,7 @@ def doiEntry(fname, doiLookup):
                 pinfo("Doi not found.")
                 continue
 
-            print(formatBibEntries(bibData['bibCollection'], [bibData['key']], show_numbers=False))
+            print(formatBibEntries(bibData, list(bibData.entries.keys()), show_numbers=False))
 
             response = prompt("OK" , "yn")
             if response.lower() == 'y':
