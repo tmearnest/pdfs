@@ -1,17 +1,18 @@
-import inotify.adapters
-import os, argparse, shutil
-import termcolor as tc
+import os
+import shutil
+import sys
 import tempfile
-from . import *
-from .Pdf import *
-from .Doi import *
-from .Search import *
-from .Db import DB
-from .Metadata import DoiLookup, concatBibliography
-from pybtex.database import parse_file
+import inotify.adapters
+import termcolor as tc
+from pybtex.database import parse_string
 
-def _stripAnsi(s):
-    return re.sub(r'\x1b[^m]*m', ' ', s)
+from . import perror, pinfo
+from .CaptureDoi import AbortException, doiEntry, selectDoi
+from .Pdf import GetPdfTxt, md5sum
+from .Metadata import DoiLookup
+from .Db import DB
+from .Search import Search
+from .BibFormat import formatBibEntries, concatBibliography, rekey
 
 class EntryExistsError(Exception):
     pass
@@ -20,8 +21,16 @@ class DoiFailureError(Exception):
     pass
 
 
-def dbInit(args):
+def cmd_init(args):
     dirs = args.dirs
+
+    if args.force:
+        try:
+            shutil.rmtree(dirs.index)
+            shutil.rmtree(dirs.pdf)
+            os.unlink(dirs.db)
+        except:
+            pass
 
     for x in [dirs.root, dirs.index, dirs.pdf]:
         try:
@@ -29,12 +38,20 @@ def dbInit(args):
         except FileExistsError:
             pass
 
+    if os.listdir(dirs.index):
+        perror("Cowardly refusing to clobber an existing index.")
+        sys.exit(1)
     Search.initialize(dirs.index)
+
+    if os.path.exists(dirs.db):
+        perror("Cowardly refusing to clobber an existing database.")
+        sys.exit(1)
+
     DB.initialize(dirs.db)
-    print("initialized new database at: "+dirs.root)
+    pinfo("Initialized new database at: "+dirs.root)
 
 
-def dbWatch(args):
+def cmd_watch(args):
     wd = os.path.abspath(args.watchDir)
     inot = inotify.adapters.Inotify()
     inot.add_watch(wd.encode())
@@ -59,13 +76,14 @@ def dbWatch(args):
         inot.remove_watch(wd)
 
 
-def dbAdd(args):
+def cmd_add(args):
     try:
         _dbAdd(args)
     except EntryExistsError:
         sys.exit(1)
     except AbortException:
         sys.exit(1)
+
 
 def _dbAdd(args):
     fname = args.file
@@ -95,7 +113,6 @@ def _dbAdd(args):
     if bibObj is None:
         perror("Doi lookup failed")
         raise DoiFailureError
-
     
     key = bibObj.entries.keys()[0]
     bibs = db.lookup("citeKey", key)
@@ -116,10 +133,10 @@ def _dbAdd(args):
     db.addBibtex(bibObj, md5)
     print("Imported " + tc.colored(os.path.basename(fname), "green") + " as")
     print(formatBibEntries(bibObj, [key], show_numbers=False))
+    print()
 
 
-
-def dbSearch(args):
+def cmd_search(args):
     dirs = args.dirs
     s = Search(dirs.index)
     db = DB(dirs.db)
@@ -177,10 +194,8 @@ def dbSearch(args):
     print(formatBibEntries(rs, rs.entries.keys(), show_numbers=False))
 
 
-
-def dbBib(args):
+def cmd_bibtex(args):
     dirs = args.dirs
-    s = Search(dirs.index)
     db = DB(dirs.db)
     if args.all:
         bd = db.getAll()
@@ -189,34 +204,39 @@ def dbBib(args):
 
     print(bd.to_string("bibtex"))
 
-def dbEdit(args):
+
+def spawnEditor(text, filetype='txt'):
+    tmpf,tmpfname = tempfile.mkstemp(suffix="."+filetype, text=True)
+    os.write(tmpf, text.encode())
+    os.close(tmpf)
+    editor=os.environ.get("VISUAL") or "vi"
+    os.system("{} {}".format(editor, tmpfname))
+    newText = open(tmpfname).read()
+    os.unlink(tmpfname)
+    return newText
+
+def cmd_edit(args):
     dirs = args.dirs
-    s = Search(dirs.index)
     db = DB(dirs.db)
     oldKey = args.key
     oldCollection = db.lookup("citeKey", oldKey)
     bibtex = oldCollection.to_string("bibtex")
-    tmpf,tmpfname = tempfile.mkstemp(suffix=".bib", text=True)
-    os.write(tmpf, bibtex.encode())
-    os.close(tmpf)
-    editor=os.environ.get("VISUAL") or "vi"
-    os.system("{} {}".format(editor, tmpfname))
-    newBibtex = open(tmpfname).read()
+    newBibtex = spawnEditor(bibtex, "bib")
     if newBibtex == bibtex:
         perror("not modified")
         sys.exit(0)
-    collection = parse_file(tmpfname)
+    collection = parse_string(newBibtex, "bibtex")
     newKey = collection.entries.keys()[0]
     db.modBibtex(oldKey, collection)
     shutil.move(os.path.join(dirs.pdf, oldKey+".pdf"), os.path.join(dirs.pdf, newKey+".pdf"))
 
 
-def dbModTags(args):
+def cmd_tags(args):
     dirs = args.dirs
     db = DB(dirs.db)
     key = args.key
     tags = ["+" + t for t in args.add] + ["-" + t for t in args.remove]
-    if len(tags) == 0:
+    if not tags:
         print(db.getTags(key))
     else:
         db.modTags(key, tags)

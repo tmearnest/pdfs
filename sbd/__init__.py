@@ -1,5 +1,6 @@
+import json
+import os
 import sys
-import json, os
 import termcolor as tc
 
 def pinfo(m):

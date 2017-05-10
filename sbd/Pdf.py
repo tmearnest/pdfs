@@ -1,3 +1,7 @@
+import hashlib
+import pickle
+import os
+
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
@@ -6,9 +10,10 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfdevice import PDFDevice
 from pdfminer.layout import LAParams, LTTextBox
 from pdfminer.converter import PDFPageAggregator
+
 from unidecode import unidecode
-import hashlib, pickle
-from . import *
+
+from . import pinfo
 
 class GetPdfTxt:
     def __init__(self, cacheFile):
@@ -21,14 +26,12 @@ class GetPdfTxt:
     def __call__(self, fname):
         md5 = md5sum(fname)
         if md5 in self.cache:
-            pinfo("PDF cache hit")
             return self.cache[md5]
-        else:
-            pinfo("PDF cache miss")
-            txt = self._getPdfTxt(fname)
-            self.cache[md5] = txt
-            pickle.dump(self.cache, open(self.cacheFile,"wb"))
-            return txt
+        pinfo("PDF cache miss")
+        txt = self._getPdfTxt(fname)
+        self.cache[md5] = txt
+        pickle.dump(self.cache, open(self.cacheFile,"wb"))
+        return txt
 
     @staticmethod
     def _getPdfTxt(fname):
@@ -55,7 +58,7 @@ class GetPdfTxt:
 
             pages = []
 
-            for i,page in enumerate(PDFPage.create_pages(document)):
+            for page in PDFPage.create_pages(document):
                 interpreter.process_page(page)
                 layout = device.get_result()
                 pages.append(unidecode(' '.join(sum((x.split() for x in extractText(layout)), []))))

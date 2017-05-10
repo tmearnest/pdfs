@@ -41,5 +41,5 @@ setup(name=pkgName,
       url='http://tyler.ea.rne.st',
       license='MIT License',
       entry_points = {"console_scripts": ['sbd = sbd.__main__:main']},
-      install_requires = ["ftfy", "pypandoc", "inotify", "flask", "termcolor", "whoosh", "pdfminer.six", "unidecode", "pybtex", "requests"],
+      install_requires = ["prompt_toolkit", "ftfy", "pypandoc", "inotify", "flask", "termcolor", "whoosh", "pdfminer.six", "unidecode", "pybtex", "requests"],
       zip_safe=False)

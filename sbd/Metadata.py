@@ -1,26 +1,11 @@
 import requests
 import pickle
 import ftfy
-from pybtex.database import parse_string, BibliographyData, Entry, Person
+from pybtex.database import parse_string, BibliographyData
 import re
 from unidecode import unidecode
-from . import *
+from . import pinfo
 import pypandoc
-
-
-def concatBibliography(bibs):
-    db = BibliographyData()
-    keys = set()
-    for bib in bibs:
-        for key,entry in bib.entries.items():
-            if key in keys:
-                raise RuntimeError("duplicate keys found")
-            else:
-                db.add_entry(key, entry)
-    return db
-
-
-
 
 class DoiLookup:
     def __init__(self, cacheFile):
@@ -32,14 +17,12 @@ class DoiLookup:
 
     def __call__(self, doi):
         if doi in self.cache:
-            pinfo("Doi cache hit")
             return _parseBibtex(self.cache[doi])
-        else:
-            pinfo("Doi cache miss")
-            bibtex = self._lookup(doi)
-            self.cache[doi] = bibtex
-            pickle.dump(self.cache, open(self.cacheFile,"wb"))
-            return _parseBibtex(bibtex)
+        pinfo("Doi cache miss")
+        bibtex = self._lookup(doi)
+        self.cache[doi] = bibtex
+        pickle.dump(self.cache, open(self.cacheFile,"wb"))
+        return _parseBibtex(bibtex)
 
     @staticmethod
     def _lookup(doi):
@@ -55,7 +38,7 @@ def _parseBibtex(bibTex):
     coll = parse_string(txt, "bibtex")
     db = BibliographyData()
     empty = True
-    for k,e in coll.entries.items():
+    for e in coll.entries.values():
         keyPerson = e.persons.get('author') or e.persons.get('editor')
         if keyPerson is None:
             return None
