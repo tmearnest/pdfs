@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from . import perror
-from .Command import cmd_init, cmd_add, cmd_search, cmd_watch, cmd_edit, cmd_bibtex, cmd_tags 
+from .Command import cmd_init, cmd_add, cmd_search, cmd_watch, cmd_edit, cmd_bibtex, cmd_tags, cmd_notes
 from .CaptureDoi import AbortException
 from .WwwApp import cmd_www
 
@@ -30,6 +30,7 @@ def main():
     subparsers = parser.add_subparsers(title='Commands')
 
     sp = subparsers.add_parser('init', help="Obliterate {} and initialize new database".format(dbDir))
+    sp.add_argument("--force", help="Overwrite existing database", action='store_true')
     sp.set_defaults(func=cmd_init)
     sp.set_defaults(dirs=dirs)
 
@@ -44,6 +45,7 @@ def main():
     g = sp.add_mutually_exclusive_group(required=True)
     g.add_argument("--tag", "-G", help="Search for tags", action="store_true")
     g.add_argument("--text", "-t", help="Search body text", action="store_true")
+    g.add_argument("--note", "-n", help="Search notes", action="store_true")
     g.add_argument("--title", "-T", help="Search titles", action="store_true")
     g.add_argument("--year", "-Y", help="Search years", action="store_true")
     g.add_argument("--doi", "-D", help="Search dois", action="store_true")
@@ -69,7 +71,6 @@ def main():
     sp.set_defaults(func=cmd_edit)
     sp.set_defaults(dirs=dirs)
 
-
     sp = subparsers.add_parser('bibtex', help="Get BibTeX")
     g = sp.add_mutually_exclusive_group(required=True)
     g.add_argument("--all", "-a", help="Dump all entries", action="store_true")
@@ -82,6 +83,14 @@ def main():
     sp.add_argument("--add", "-a", help="Tags to add", nargs="+", default=[])
     sp.add_argument("--remove", "-r", help="Tags to remove", nargs="+", default=[])
     sp.set_defaults(func=cmd_tags)
+    sp.set_defaults(dirs=dirs)
+
+    sp = subparsers.add_parser('note', help="Add/modify notes")
+    sp.add_argument('key', type=str, help='Cite key')
+    g = sp.add_mutually_exclusive_group(required=False)
+    g.add_argument("--edit", "-e", help="Add or edit note", action='store_true')
+    g.add_argument("--remove", "-r", help="Delete note", action='store_true')
+    sp.set_defaults(func=cmd_notes)
     sp.set_defaults(dirs=dirs)
 
     args = parser.parse_args()
