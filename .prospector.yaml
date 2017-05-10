@@ -1,0 +1,19 @@
+ignore-paths: 
+    - build
+    - dist
+    - sbd.egg-info
+    - docs
+
+pep8:
+    options:
+        max-line-length: 150
+
+pep257:
+    disable:
+        - D203
+        - D105
+pyroma:
+    run: true
+
+vulture:
+    run: true
