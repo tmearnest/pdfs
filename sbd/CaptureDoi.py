@@ -2,7 +2,7 @@ import re
 import os
 from .Prompt import promptOptions, promptString
 
-from . import pinfo, perror
+from .Logging import log
 from .BibFormat import formatBibEntries, concatBibliography
 
 class AbortException(Exception):
@@ -63,7 +63,7 @@ def selectDoi(txt, fname, doiLookup):
                     print()
                     return bibChunk[choice-1]
             except ValueError:
-                perror("Invalid response")
+                log.warning("Invalid response")
                 choice = None
     return None
 
@@ -75,7 +75,7 @@ def doiEntry(fname, doiLookup):
             raise AbortException
         bibData = doiLookup(doi)
         if bibData is None:
-            pinfo("Doi not found.")
+            log.warning("Doi not found.")
             continue
 
         print(formatBibEntries(bibData, list(bibData.entries.keys()), show_numbers=False))

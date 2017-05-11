@@ -1,5 +1,4 @@
 import hashlib
-import pickle
 import os
 
 from pdfminer.pdfparser import PDFParser
@@ -10,60 +9,45 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfdevice import PDFDevice
 from pdfminer.layout import LAParams, LTTextBox
 from pdfminer.converter import PDFPageAggregator
+from .Cache import cachedRequest
 
 from unidecode import unidecode
+from .Logging import log
 
-from . import pinfo
+def getPdfTxt(fname):
+    return _getPdfTxt(fname, cache_key=md5sum(fname))
 
-class GetPdfTxt:
-    def __init__(self, cacheFile):
-        self.cacheFile = cacheFile
-        try:
-            self.cache = pickle.load(open(self.cacheFile,"rb"))
-        except FileNotFoundError:
-            self.cache = {}
+@cachedRequest("PDF")
+def _getPdfTxt(fname, cache_key=None):
+    with open(fname, "rb") as fp: 
+        log.info("Parsing pdf file: " + os.path.basename(fname))
+        parser = PDFParser(fp)
+        document = PDFDocument(parser)
+        rsrcmgr = PDFResourceManager()
+        device = PDFDevice(rsrcmgr)
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
 
-    def __call__(self, fname):
-        md5 = md5sum(fname)
-        if md5 in self.cache:
-            return self.cache[md5]
-        pinfo("PDF cache miss")
-        txt = self._getPdfTxt(fname)
-        self.cache[md5] = txt
-        pickle.dump(self.cache, open(self.cacheFile,"wb"))
-        return txt
+        laparams = LAParams()
+        device = PDFPageAggregator(rsrcmgr, laparams=laparams)
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        pages = []
 
-    @staticmethod
-    def _getPdfTxt(fname):
-        with open(fname, "rb") as fp: 
-            pinfo("Parsing pdf file: " + os.path.basename(fname))
-            parser = PDFParser(fp)
-            document = PDFDocument(parser)
-            rsrcmgr = PDFResourceManager()
-            device = PDFDevice(rsrcmgr)
-            interpreter = PDFPageInterpreter(rsrcmgr, device)
+        def extractText(g):
+            if isinstance(g, LTTextBox):
+                return [g.get_text()]
+            try:
+                return sum((extractText(x) for x in g), [])
+            except TypeError:
+                return []
 
-            laparams = LAParams()
-            device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-            interpreter = PDFPageInterpreter(rsrcmgr, device)
-            pages = []
+        pages = []
 
-            def extractText(g):
-                if isinstance(g, LTTextBox):
-                    return [g.get_text()]
-                try:
-                    return sum((extractText(x) for x in g), [])
-                except TypeError:
-                    return []
+        for page in PDFPage.create_pages(document):
+            interpreter.process_page(page)
+            layout = device.get_result()
+            pages.append(unidecode(' '.join(sum((x.split() for x in extractText(layout)), []))))
 
-            pages = []
-
-            for page in PDFPage.create_pages(document):
-                interpreter.process_page(page)
-                layout = device.get_result()
-                pages.append(unidecode(' '.join(sum((x.split() for x in extractText(layout)), []))))
-
-            return pages
+        return pages
 
 def md5sum(fname):
     return hashlib.md5(open(fname,"rb").read()).hexdigest()

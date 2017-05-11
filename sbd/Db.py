@@ -4,8 +4,7 @@ import os
 import sqlite3
 
 from pybtex.database import BibliographyData, Entry, Person
-from . import perror
-
+from .Logging import log
 
 @contextlib.contextmanager
 def SqlCursor(dbFile):
@@ -32,32 +31,33 @@ class DB:
             cur.execute("""
                 CREATE TABLE bib(id INTEGER PRIMARY KEY,
                                  citeKey TEXT COLLATE NOCASE,
-                                 doi TEXT,
+                                 pmid TEXT,
                                  pdfMd5 TEXT,
                                  addDate TEXT,
                                  entryType TEXT,
-                                 address TEXT,
-                                 annote TEXT,
-                                 booktitle TEXT,
-                                 chapter TEXT,
-                                 crossref TEXT,
-                                 edition TEXT,
-                                 howpublished TEXT,
-                                 institution TEXT,
-                                 journal TEXT,
-                                 key TEXT,
-                                 month TEXT,
-                                 note TEXT,
-                                 number TEXT,
-                                 organization TEXT,
-                                 pages TEXT,
-                                 publisher TEXT,
-                                 school TEXT,
-                                 series TEXT,
-                                 title TEXT,
-                                 type TEXT,
-                                 volume TEXT,
-                                 year TEXT)
+                                 bk_doi TEXT,
+                                 bk_address TEXT,
+                                 bk_annote TEXT,
+                                 bk_booktitle TEXT,
+                                 bk_chapter TEXT,
+                                 bk_crossref TEXT,
+                                 bk_edition TEXT,
+                                 bk_howpublished TEXT,
+                                 bk_institution TEXT,
+                                 bk_journal TEXT,
+                                 bk_key TEXT,
+                                 bk_month TEXT,
+                                 bk_note TEXT,
+                                 bk_number TEXT,
+                                 bk_organization TEXT,
+                                 bk_pages TEXT,
+                                 bk_publisher TEXT,
+                                 bk_school TEXT,
+                                 bk_series TEXT,
+                                 bk_title TEXT,
+                                 bk_type TEXT,
+                                 bk_volume TEXT,
+                                 bk_year TEXT)
             """)
             cur.execute("""
                 CREATE TABLE people(id INTEGER PRIMARY KEY,
@@ -181,9 +181,9 @@ class DB:
                 bib.persons['editor'] = [Person(" ".join(ns)) for ns in d['editors']]
 
             for k,v in d.items():
-                if k not in ['authors', 'editors', 'addDate', 'entryType', 'citeKey', 'id', 'pdfMd5']:
+                if k.startswith("bk_"):
                     if v is not None:
-                        bib.fields[k] = v
+                        bib.fields[k[3:]] = v
             db.add_entry(d['citeKey'], bib)
         return None if empty else db
             
@@ -236,7 +236,7 @@ class DB:
             for tag in delTags:
                 tid = self._findTag(cur, tag)
                 if tid is None:
-                    perror("Tag {} not found".format(tag))
+                    log.warning("Tag %s not found", tag)
                 else:
                     cur.execute("DELETE from bibTags WHERE tagId=? AND bibId=?", (tid,bibId))
                     cur.execute("SELECT bibId from bibTags WHERE tagId=?", (tid,))
@@ -301,21 +301,29 @@ class DB:
     def modBibtex(self, searchCiteKey, collection):
         tags = self.getTags(searchCiteKey)
         with SqlCursor(self.dbFile) as cur:
-            cur.execute("SELECT pdfMd5 FROM bib WHERE citeKey=?", (searchCiteKey,))
+            cur.execute("SELECT pdfMd5,pmid FROM bib WHERE citeKey=?", (searchCiteKey,))
             row = cur.fetchone()
-            pdfMd5 = row[0]
+            pdfMd5, pmid = row
+        abstract = collection.entries[searchCiteKey].fields['annote']
         self.delBibtex(searchCiteKey)
-        self.addBibtex(collection, pdfMd5, tags=tags)
+        self.addBibtex(collection, pdfMd5, abstract, pmid, tags=tags)
 
 
-    def addBibtex(self, collection, pdfMd5, tags=None):
+    def addBibtex(self, collection, pdfMd5, abstract, pmid, tags=None):
         """Only first entry added"""
         tags = tags or []
         with SqlCursor(self.dbFile) as cur:
             for citekey, bib in collection.entries.items():
-                entryType = bib.type
-                fields = dict(bib.fields)
+                fields = {"bk_"+k : v for k,v in bib.fields.items()}
+                if abstract:
+                    fields['bk_annote'] = abstract
+                if pmid:
+                    fields['pmid'] = pmid
                 fields['pdfMd5'] = pdfMd5
+                fields['citeKey'] = citekey
+                fields['entryType'] = bib.type
+                fields['addDate'] = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
+
                 people = dict(author=[], editor=[])
                 for k, ps in bib.persons.items():
                     for p in ps:
@@ -326,10 +334,6 @@ class DB:
                         people[k].append(pid)
 
                 tagIds = [self._lookupTag(cur, t) for t in tags]
-
-                fields['citeKey'] = citekey
-                fields['entryType'] = entryType
-                fields['addDate'] = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
 
                 cols = list(fields.keys())
                 vals = [fields[c] for c in cols]
@@ -345,7 +349,6 @@ class DB:
         with SqlCursor(self.dbFile) as cur:
             ids = self._lookupBibId(cur, key, value)
             return self._dictsToBib([self._bibDataById(cur,bibId) for bibId in ids])
-
 
     def getAll(self):
         with SqlCursor(self.dbFile) as cur:

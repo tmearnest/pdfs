@@ -6,10 +6,10 @@ import inotify.adapters
 import termcolor as tc
 from pybtex.database import parse_string
 
-from . import perror, pinfo
+from . Logging import log
 from .CaptureDoi import AbortException, doiEntry, selectDoi
-from .Pdf import GetPdfTxt, md5sum
-from .Metadata import DoiLookup
+from .Pdf import getPdfTxt, md5sum
+from .Metadata import doiLookup, pmidAbstractLookup
 from .Db import DB
 from .TextSearch import TextSearch
 from .BibFormat import formatBibEntries, concatBibliography, rekey
@@ -20,42 +20,39 @@ class EntryExistsError(Exception):
 class DoiFailureError(Exception):
     pass
 
-
 def cmd_init(args):
-    dirs = args.dirs
-
     if args.force:
         try:
-            shutil.rmtree(dirs.index)
-            shutil.rmtree(dirs.pdf)
-            os.unlink(dirs.db)
+            shutil.rmtree(args.indexDir)
+            shutil.rmtree(args.pdfDir)
+            os.unlink(args.dbFile)
         except:
             pass
 
-    for x in [dirs.root, dirs.index, dirs.pdf]:
+    for x in [args.sbdbDir, args.indexDir, args.pdfDir]:
         try:
             os.mkdir(x)
         except FileExistsError:
             pass
 
-    if os.listdir(dirs.index):
-        perror("Cowardly refusing to clobber an existing index.")
+    if os.listdir(args.indexDir):
+        log.error("Cowardly refusing to clobber an existing index.")
         sys.exit(1)
-    TextSearch.initialize(dirs.index)
+    TextSearch.initialize(args.indexDir)
 
-    if os.path.exists(dirs.db):
-        perror("Cowardly refusing to clobber an existing database.")
+    if os.path.exists(args.dbFile):
+        log.error("Cowardly refusing to clobber an existing database.")
         sys.exit(1)
 
-    DB.initialize(dirs.db)
-    pinfo("Initialized new database at: "+dirs.root)
+    DB.initialize(args.dbFile)
+    log.info("Initialized new database at: %s", args.sbdbDir)
 
 
 def cmd_watch(args):
     wd = os.path.abspath(args.watchDir)
     inot = inotify.adapters.Inotify()
     inot.add_watch(wd.encode())
-    pinfo("Watching {} for new pdf files...".format(wd))
+    log.info("Watching %s for new pdf files...", wd)
     try:
         for event in inot.event_gen():
             if event is not None:
@@ -63,7 +60,7 @@ def cmd_watch(args):
                 if 'IN_CREATE' in type_names:
                     newFile = filename.decode("utf-8")
                     if newFile.lower().endswith(".pdf") and newFile[0] != '.':
-                        pinfo("new file: " + newFile)
+                        log.info("new file: %s",  newFile)
                         args.file = os.path.join(wd, newFile)
                         args.doi = None
                         try:
@@ -87,18 +84,15 @@ def cmd_add(args):
 
 def _addFile(args):
     fname = args.file
-    dirs = args.dirs
-    s = TextSearch(dirs.index)
-    db = DB(dirs.db)
-    doiLookup = DoiLookup(dirs.doicache)
-    getPdfTxt = GetPdfTxt(dirs.pdfcache)
+    s = TextSearch(args.indexDir)
+    db = DB(args.dbFile)
 
     md5 = md5sum(fname)
     bibs = db.lookup("pdfMd5", md5)
 
     if bibs is not None:
         key = bibs.entries.keys()[0]
-        perror("File already in db under key {}".format(key))
+        log.error("File already in db under key %s", key)
         raise EntryExistsError
     txt = getPdfTxt(fname)
 
@@ -111,13 +105,15 @@ def _addFile(args):
             bibObj = doiEntry(fname, doiLookup)
 
     if bibObj is None:
-        perror("Doi lookup failed")
+        log.error("Doi lookup failed")
         raise DoiFailureError
+
+    pmid, abstract = pmidAbstractLookup(doi)
     
     key = bibObj.entries.keys()[0]
     bibs = db.lookup("citeKey", key)
     if bibs is not None:
-        perror("Doi already in db under key {}".format(key))
+        log.error("Doi already in db under key %s", key)
         raise EntryExistsError
 
     baseKey,suffix = key, '`'
@@ -128,18 +124,17 @@ def _addFile(args):
         bibObj = rekey(bibObj, key)
 
     s.addFulltext(key, txt)
-    shutil.copy(fname, os.path.join(dirs.pdf, key+".pdf"))
+    shutil.copy(fname, os.path.join(args.pdfDir, key+".pdf"))
 
-    db.addBibtex(bibObj, md5)
+    db.addBibtex(bibObj, md5, abstract, pmid)
     print("Imported " + tc.colored(os.path.basename(fname), "green") + " as")
     print(formatBibEntries(bibObj, [key], show_numbers=False))
     print()
 
 
 def cmd_search(args):
-    dirs = args.dirs
-    s = TextSearch(dirs.index)
-    db = DB(dirs.db)
+    s = TextSearch(args.indexDir)
+    db = DB(args.dbFile)
 
     terms = ' '.join(args.terms)
 
@@ -169,10 +164,7 @@ def cmd_search(args):
                     print("page " + tc.colored(str(page+1), "yellow") + ", score " + tc.colored(" {:.3f}".format(score), "blue"))
                     print(context)
                     print()
-
-                pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, key + ".pdf"))
-                print(tc.colored(pth, "green"))
-        pinfo("{} result{}".format("No" if resultCt == 0 else resultCt, "" if resultCt == 1 else "s"))
+        log.info("%s result%s", "No" if resultCt == 0 else str(resultCt), "" if resultCt == 1 else "s")
         return
     elif args.note:
         firstLine = True
@@ -198,11 +190,7 @@ def cmd_search(args):
                 print("score " + tc.colored(" {:.3f}".format(score), "blue"))
                 print(context)
                 print()
-
-                pth = "file://" + os.path.abspath(os.path.join(dirs.pdf, key + ".pdf"))
-                print(tc.colored(pth, "green"))
-
-        pinfo("{} result{}".format("No" if resultCt == 0 else resultCt, "" if resultCt == 1 else "s"))
+        log.info("%s result%s", "No" if resultCt == 0 else str(resultCt), "" if resultCt == 1 else "s")
         return
     elif args.tag:
         rs = db.lookup("tag", terms)
@@ -211,15 +199,19 @@ def cmd_search(args):
     elif args.editor:
         rs = db.lookup("editors", terms)
     elif args.title:
-        rs = db.lookup("title", terms)
+        rs = db.lookup("bk_title", terms)
     elif args.journal:
-        rs = db.lookup("journal", terms)
+        rs = db.lookup("bk_journal", terms)
     elif args.year:
-        rs = db.lookup("year", terms)
+        rs = db.lookup("bk_year", terms)
     elif args.cite_key:
         rs = db.lookup("citeKey", terms)
+    elif args.pmid:
+        rs = db.lookup("pmid", terms)
+    elif args.abstract:
+        rs = db.lookup("bk_annote", terms)
     elif args.doi:
-        rs = db.lookup("doi", terms)
+        rs = db.lookup("bk_doi", terms)
     else:
         raise NotImplementedError
 
@@ -228,12 +220,11 @@ def cmd_search(args):
 
     resultCt = 0 if not rs else len(rs.entries)
 
-    pinfo("{} result{}".format("No" if resultCt == 0 else resultCt, "" if resultCt == 1 else "s"))
+    log.info("%s result%s", "No" if resultCt == 0 else str(resultCt), "" if resultCt == 1 else "s")
 
 
 def cmd_bibtex(args):
-    dirs = args.dirs
-    db = DB(dirs.db)
+    db = DB(args.dbFile)
     if args.all:
         bd = db.getAll()
     else:
@@ -253,29 +244,27 @@ def spawnEditor(text, filetype='txt'):
     return newText
 
 def cmd_edit(args):
-    dirs = args.dirs
-    db = DB(dirs.db)
-    s = TextSearch(dirs.index)
+    db = DB(args.dbFile)
+    s = TextSearch(args.indexDir)
     oldKey = args.key
     oldCollection = db.lookup("citeKey", oldKey)
     bibtex = oldCollection.to_string("bibtex")
     newBibtex = spawnEditor(bibtex, "bib")
     if newBibtex == bibtex:
-        perror("not modified")
+        log.warning("not modified")
         sys.exit(0)
     collection = parse_string(newBibtex, "bibtex")
     newKey = collection.entries.keys()[0]
     if  db.lookup("citeKey", newKey) is not None:
-        perror("key {} already exists in DB".format(newKey))
+        log.error("key %s already exists in DB", newKey)
         sys.exit(1)
     db.modBibtex(oldKey, collection)
     s.renameKey(oldKey, newKey)
-    shutil.move(os.path.join(dirs.pdf, oldKey+".pdf"), os.path.join(dirs.pdf, newKey+".pdf"))
+    shutil.move(os.path.join(args.pdfDir, oldKey+".pdf"), os.path.join(args.pdfDir, newKey+".pdf"))
 
 
 def cmd_tags(args):
-    dirs = args.dirs
-    db = DB(dirs.db)
+    db = DB(args.dbFile)
     key = args.key
     tags = ["+" + t for t in args.add] + ["-" + t for t in args.remove]
     if not tags:
@@ -284,14 +273,13 @@ def cmd_tags(args):
         db.modTags(key, tags)
 
 def cmd_notes(args):
-    dirs = args.dirs
-    s = TextSearch(dirs.index)
-    db = DB(dirs.db)
+    s = TextSearch(args.indexDir)
+    db = DB(args.dbFile)
     key = args.key
 
     bibs = db.lookup("citeKey", args.key)
     if bibs is None:
-        perror("Key {} not in database".format(args.key))
+        log.error("Key %s not in database", args.key)
         sys.exit(1)
 
     if args.edit:
@@ -302,7 +290,7 @@ def cmd_notes(args):
         if newNote != note:
             s.addNote(key, newNote)
         else:
-            perror("not modified")
+            log.warning("not modified")
             sys.exit(0)
     elif args.remove:
         s.delNote(key)
@@ -313,4 +301,4 @@ def cmd_notes(args):
             print(tc.colored("Notes", "green"))
             print(note)
         else:
-            perror("No notes for " + key)
+            log.warning("No notes for %s", key)

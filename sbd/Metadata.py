@@ -1,39 +1,23 @@
 import xml.etree.ElementTree as etree
 import requests
-import pickle
 import ftfy
 from pybtex.database import parse_string, BibliographyData
 import re
 from unidecode import unidecode
-from . import pinfo
 import pypandoc
-
-class DoiLookup:
-    def __init__(self, cacheFile):
-        self.cacheFile = cacheFile
-        try:
-            self.cache = pickle.load(open(self.cacheFile,"rb"))
-        except FileNotFoundError:
-            self.cache = {}
-
-    def __call__(self, doi):
-        if doi in self.cache:
-            return _parseBibtex(self.cache[doi])
-        pinfo("Doi cache miss")
-        bibtex = self._lookup(doi)
-        self.cache[doi] = bibtex
-        pickle.dump(self.cache, open(self.cacheFile,"wb"))
-        return _parseBibtex(bibtex)
-
-    @staticmethod
-    def _lookup(doi):
-        url = 'http://dx.doi.org/{}'.format(doi)
-        headers = {'accept': 'application/x-bibtex'}
-        r = requests.get(url, headers=headers)
-        return r.text
+from .Cache import cachedRequest
+from .Logging import log
 
 
-def _parseBibtex(bibTex):
+@cachedRequest("DOI")
+def _doiLookup(doi):
+    url = 'http://dx.doi.org/{}'.format(doi)
+    headers = {'accept': 'application/x-bibtex'}
+    return requests.get(url, headers=headers).text
+
+
+def doiLookup(doi):
+    bibTex = _doiLookup(doi)
     txt = '\n'.join(x for x in bibTex.splitlines() if not re.search(r"^\s*(link|url)\s*=",x, re.I))
     coll = parse_string(txt, "bibtex")
     db = BibliographyData()
@@ -64,16 +48,18 @@ def _parseBibtex(bibTex):
 
     return None if empty else db
 
-def _getPmidAbstract(doi):
+
+@cachedRequest("Esearch")
+def _pmidRequest(doi):
     r = requests.get("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
                      params=dict(tool='sbd',
                                  email='tylere@rne.st',
                                  term=doi))
+    return r.text
 
-    pmid = (etree.fromstring(r.text)
-                 .find("IdList")
-                 .find("Id").text)
 
+@cachedRequest("Efetch")
+def _pmAbsRequest(pmid):
     r = requests.get('http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?',
                      params=dict(tool='sbd',
                                  email='tylere@rne.st',
@@ -81,13 +67,25 @@ def _getPmidAbstract(doi):
                                  retmode='XML',
                                  rettype='abstract',
                                  id=pmid))
+    return r.text
 
-    abstract = (etree.fromstring(r.text)
-                     .find("PubmedArticle")
-                     .find("MedlineCitation")
-                     .find("Article")
-                     .find("Abstract")
-                     .find("AbstractText").text)
+
+def pmidAbstractLookup(doi):
+    try:
+        pmid = (etree.fromstring(_pmidRequest(doi))
+                     .find("IdList")
+                     .find("Id").text)
+    except AttributeError:
+        return None, None
+
+    try:
+        abstract = (etree.fromstring(_pmAbsRequest(pmid))
+                         .find("PubmedArticle")
+                         .find("MedlineCitation")
+                         .find("Article")
+                         .find("Abstract")
+                         .find("AbstractText").text)
+    except AttributeError:
+        return pmid, None
 
     return pmid, abstract
-
