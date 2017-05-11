@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as etree
 import requests
 import pickle
 import ftfy
@@ -32,7 +33,6 @@ class DoiLookup:
         return r.text
 
 
-
 def _parseBibtex(bibTex):
     txt = '\n'.join(x for x in bibTex.splitlines() if not re.search(r"^\s*(link|url)\s*=",x, re.I))
     coll = parse_string(txt, "bibtex")
@@ -63,3 +63,31 @@ def _parseBibtex(bibTex):
         empty = False
 
     return None if empty else db
+
+def _getPmidAbstract(doi):
+    r = requests.get("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+                     params=dict(tool='sbd',
+                                 email='tylere@rne.st',
+                                 term=doi))
+
+    pmid = (etree.fromstring(r.text)
+                 .find("IdList")
+                 .find("Id").text)
+
+    r = requests.get('http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?',
+                     params=dict(tool='sbd',
+                                 email='tylere@rne.st',
+                                 db='pubmed',
+                                 retmode='XML',
+                                 rettype='abstract',
+                                 id=pmid))
+
+    abstract = (etree.fromstring(r.text)
+                     .find("PubmedArticle")
+                     .find("MedlineCitation")
+                     .find("Article")
+                     .find("Abstract")
+                     .find("AbstractText").text)
+
+    return pmid, abstract
+
