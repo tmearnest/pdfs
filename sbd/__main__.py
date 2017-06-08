@@ -27,6 +27,7 @@ def main():
     parser.set_defaults(pdfDir=pdfDir)
     parser.set_defaults(dbFile=dbFile)
     parser.set_defaults(cacheFile=cacheFile)
+    parser.set_defaults(func=lambda x: parser.print_usage())
 
     parser.add_argument("--logging-level", "-L",
                         help="Logging level: CRITICAL, ERROR, WARNING, INFO, DEBUG",

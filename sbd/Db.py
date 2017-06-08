@@ -87,7 +87,7 @@ class DB:
 
 
     @staticmethod
-    def _unwrapIds(rs):
+    def _unwrapFirst(rs):
         return [x[0] for x in rs]
 
 
@@ -137,13 +137,13 @@ class DB:
                 people.last like "%{value}%"
         """.format(key=key, value=value)
         cur.execute(sql)
-        return cls._unwrapIds(cur.fetchall())
+        return cls._unwrapFirst(cur.fetchall())
 
 
     @classmethod
     def _bibIdFromCiteKey(cls, cur, value):
         cur.execute("SELECT bib.id FROM bib WHERE bib.citeKey==?", (value,))
-        return cls._unwrapIds(cur.fetchall())
+        return cls._unwrapFirst(cur.fetchall())
 
 
     @classmethod
@@ -162,10 +162,10 @@ class DB:
                     ON tags.id==bibTags.tagId
                 WHERE tags.tag=?
             """, (value,))
-            return cls._unwrapIds(cur.fetchall())
+            return cls._unwrapFirst(cur.fetchall())
 
         cur.execute('SELECT bib.id FROM bib WHERE bib.{key} LIKE "%{value}%"'.format(key=key,value=value))
-        return cls._unwrapIds(cur.fetchall())
+        return cls._unwrapFirst(cur.fetchall())
 
 
     @staticmethod
@@ -257,7 +257,7 @@ class DB:
                 def tagset(table, field, selField, val):
                     cur.execute("SELECT {field} FROM {table} "
                                 "WHERE {selField}=?".format(table=table,field=field,selField=selField), (val,))
-                    return set(self._unwrapIds(cur.fetchall()))
+                    return set(self._unwrapFirst(cur.fetchall()))
 
                 oldPeople = (tagset("authors", "personId", "bibId", bibId)
                               | tagset("editors", "personId", "bibId", bibId))
@@ -295,7 +295,7 @@ class DB:
                 WHERE 
                     bib.citeKey=?
             """,(citeKey,))
-            return self._unwrapIds(cur.fetchall())
+            return self._unwrapFirst(cur.fetchall())
 
 
     def modBibtex(self, searchCiteKey, collection):
@@ -350,8 +350,13 @@ class DB:
             ids = self._lookupBibId(cur, key, value)
             return self._dictsToBib([self._bibDataById(cur,bibId) for bibId in ids])
 
+    def getAllKeys(self):
+        with SqlCursor(self.dbFile) as cur:
+            cur.execute("SELECT bib.citeKey FROM bib", ())
+            return self._unwrapFirst(cur.fetchall())
+
     def getAll(self):
         with SqlCursor(self.dbFile) as cur:
             cur.execute("SELECT bib.id FROM bib", ())
-            ids = self._unwrapIds(cur.fetchall())
+            ids = self._unwrapFirst(cur.fetchall())
             return self._dictsToBib([self._bibDataById(cur,bibId) for bibId in ids])

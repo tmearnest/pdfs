@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css?family=Junge|Raleway:400,400i,700,700i|Overpass+Mono');
+
+
+body {
+    font-family: 'Raleway', sans-serif;
+}
+
+a.doi {
+    font-family: 'Overpass Mono', monospace;
+    font-size: 0.8em;
+    text-decoration: none;
+    color: #1056ad;
+}
+
+#top {
+    width: 900px;
+    margin: 2em auto;
+    background-color: #eee;
+    padding: 1em;
+    border-radius: 0.4em;
+    border: 1px solid #a9a9a9;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    margin: 0;
+    font-family: 'Junge', serif;
+}
+
+#abstract {
+    padding: 0 5em;
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+a.tag {
+    background-color: green;
+    border-radius: 0.6em;
+    padding: 0.1em 0.5em;
+    margin-right: 0.3em;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 1px 1px 3px 0px #212121;
+}
+
+a.citekey {
+    text-decoration: none;
+}
+
+a.file {
+    background-color: black;
+    color: white;
+    padding: 0.1em 0.5em;
+    text-decoration: none;
+    border-radius: 0.2em;
+}
+
+#citation {
+    text-indent: -2em;
+    padding-left: 5em;
+}
+
+p {
+    padding-left: 3em;
+}
+
+tr.search:nth-child(2n+1) td {
+    vertical-align: top;
+}
+
+tr.search:nth-child(2n+0) td {
+    padding: 1em;
+}
+
+tr.search:nth-child(4n+1), tr.search:nth-child(4n+2) {
+    background-color: #eee;
+}
+tr.search:nth-child(4n+3), tr.search:nth-child(4n+0) {
+    background-color: #fafafa;
+}
+
+table.search {
+    border-collapse: collapse;
+}
+

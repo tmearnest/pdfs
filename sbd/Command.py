@@ -12,7 +12,7 @@ from .Pdf import getPdfTxt, md5sum
 from .Metadata import doiLookup, pmidAbstractLookup
 from .Db import DB
 from .TextSearch import TextSearch
-from .BibFormat import formatBibEntries, concatBibliography, rekey
+from .BibFormat import formatBibEntries, concatBibliography, rekey, bibSingleEntry
 
 class EntryExistsError(Exception):
     pass
@@ -103,6 +103,8 @@ def _addFile(args):
         bibObj = selectDoi(' '.join(txt), fname, doiLookup)
         if bibObj is None:
             bibObj = doiEntry(fname, doiLookup)
+        doi = bibSingleEntry(bibObj).fields['doi']
+
 
     if bibObj is None:
         log.error("Doi lookup failed")

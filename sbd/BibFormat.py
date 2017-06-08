@@ -45,8 +45,12 @@ def formatBibEntries(bdb, keys, show_numbers=True, show_keys=True):
     be.write_to_stream(formatted_bibliography, f)
     return f.getvalue().strip()
 
+
+def bibSingleEntry(bib):
+    return bib.entries[bib.entries.keys()[0]]
+
 def rekey(bib, citekey):
-    ent = bib.entries[bib.entries.keys()[0]]
+    ent = bibSingleEntry(bib)
     ent.key = citekey
     bib2 = BibliographyData()
     bib2.add_entry(citekey, ent)
@@ -65,7 +69,7 @@ def concatBibliography(bibs):
 
 class HtmlBackend(OldHtmlBackend):
     def write_entry(self, key, label, text):
-        self.output('<dt><a href="/{key}.pdf" target="_blank">{key}</a></dt>\n'.format(key=key))
+        self.output('<dt><a href="/pdf/{key}.pdf" target="_blank">{key}</a></dt>\n'.format(key=key))
         self.output('<dd>{text}</dd>\n'.format(text=text))
 
 class HtmlFragmentBackend(OldHtmlBackend):
@@ -76,10 +80,13 @@ class HtmlFragmentBackend(OldHtmlBackend):
     def write_epilogue(self):
         pass
 
-def formatBibEntriesHTML(bdb, keys):
+def formatBibEntriesHTML(bdb, keys, fragment=False):
     style = Unsrt()
     formatted_bibliography = style.format_bibliography(bdb, keys)
     f = io.StringIO()
-    be = HtmlBackend(None)
+    if fragment:
+        be = HtmlFragmentBackend(None)
+    else:
+        be = HtmlBackend(None)
     be.write_to_stream(formatted_bibliography, f)
     return f.getvalue()
