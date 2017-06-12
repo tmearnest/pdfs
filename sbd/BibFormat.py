@@ -1,4 +1,5 @@
 import io
+import itertools
 import textwrap
 import termcolor as tc
 from pybtex.database import BibliographyData
@@ -62,9 +63,13 @@ def concatBibliography(bibs):
     for bib in bibs:
         for key,entry in bib.entries.items():
             if key in keys:
-                raise RuntimeError("duplicate keys found")
-            else:
-                db.add_entry(key, entry)
+                for i in itertools.count():
+                    newKey = "{}.{:04d}".format(key,i)
+                    if newKey not in keys:
+                        break
+                key = newKey
+            db.add_entry(key, entry)
+            keys.add(key)
     return db
 
 class HtmlBackend(OldHtmlBackend):
