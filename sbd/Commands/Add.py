@@ -4,7 +4,7 @@ from ..Entry import Entry
 from ..DoiExtract import entryFromUser, entryFromPdf
 from ..AnsiBib import printWork
 
-class AddFile(Command):
+class Add(Command):
     command = 'add'
     help = "Import new PDF into repository"
 
@@ -18,8 +18,8 @@ class AddFile(Command):
         db = Database(dataDir=args.data_dir)
         if args.doi:
             entry = Entry.from_doi(args.doi)
+            printWork(entry)
         else:
             entry = entryFromPdf(args.file) or entryFromUser(args.file)
 
         db.add(entry, args.file, args.supplementary, args.tags)
-        printWork(entry)

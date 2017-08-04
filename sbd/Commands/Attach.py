@@ -1,9 +1,5 @@
-import tempfile
-import re
-import os
 from .Command import Command
 from ..Database import Database
-from ..Logging import log
 from .. import UserException
 
 class Attach(Command):

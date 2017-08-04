@@ -1,6 +1,6 @@
 import re
 import os
-from . import *
+from . import AbortException
 from .Prompt import promptOptions, promptString
 from .Logging import log
 from .Entry import Entry
@@ -64,6 +64,7 @@ def entryFromPdf(fname):
                     raise ValueError
                 else:
                     print()
+                    printWork(bibChunk[choice-1])
                     return bibChunk[choice-1]
             except ValueError:
                 log.warning("Invalid response")

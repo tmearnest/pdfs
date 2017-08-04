@@ -1,6 +1,5 @@
 import re
 from .Command import Command
-from .. import UserException
 from ..Database import Database
 from ..AnsiBib import printBibliography
 

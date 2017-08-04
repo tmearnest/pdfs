@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from . import *
+from . import AbortException, UserException, EntryExistsException
 from .Database import Database
 from .Logging import log, loggingSetup
 from .Commands import getCommandTypes
@@ -32,7 +32,7 @@ def main():
 
     ddir = Database.getDataDir(dataDir=args.data_dir)
     if ddir:
-        RequestCache(os.path.join(ddir, ".requests.pkl"))
+        RequestCache(os.path.join(ddir, ".cache.pkl"))
 
     try:
         if hasattr(args, "func"):

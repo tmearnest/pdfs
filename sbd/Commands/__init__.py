@@ -1,10 +1,11 @@
-from .Init import *
-from .Add import *
-from .List import *
-from .WWW import *
-from .WatchDir import *
-from .Aux2Bib import *
-from .Edit import *
+from .Command import Command
+from .Init import Init
+from .Add import Add
+from .List import List
+from .WWW import WWW
+from .WatchDir import WatchDir
+from .Aux2Bib import Aux2Bib
+from .Edit import Edit
 
 def getCommandTypes():
     types = []

@@ -1,7 +1,7 @@
 from .Command import Command
 from ..Database import Database
 
-class InitDatabase(Command):
+class Init(Command):
     command = 'init'
     help = "Initialize new document repository"
 

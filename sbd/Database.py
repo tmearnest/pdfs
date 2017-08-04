@@ -19,20 +19,6 @@ def md5sum(fname):
     except FileNotFoundError:
         raise UserException("File {} not found".format(fname))
 
-def _fileBaseFromEntry(entry):
-    author = entry.author() or entry.editor()
-
-    author = author.split(',')[0]
-    title = entry.title() or entry.booktitle()
-    year = str(entry.year())
-    dbFname = "{}-{}-{}".format(author,year,title.replace(' ', '-'))
-    fileBase = unicodedata.normalize("NFKD", fileBase).encode('ascii', 'ignore').decode()
-    fileBase = re.sub(r'[^a-zA-Z0-9\-]', '', fileBase)
-    if len(fileBase) > 192:
-        fileBase = fileBase[:192]
-    return fileBase
-
-
 
 def _nameDbFile(entry, fname, idx):
     author = entry.author() or entry.editor()
@@ -53,8 +39,7 @@ def _nameDbFile(entry, fname, idx):
     if len(spl)>1:
         ext = spl[-1]
         return "{}.{}".format(dbFname, ext)
-    else:
-        return dbFname
+    return dbFname
 
 
 class FileLock:
@@ -196,7 +181,7 @@ class Database:
             shutil.copyfile(fn, os.path.join(self.dataDir, newSiFname))
             entry.files.append(newSiFname)
             entry.md5s.append(md5)
-            entry.fileLabels.append(os.path.basename(filename))
+            entry.fileLabels.append(os.path.basename(fn))
 
         # ensure unique cite key 
         citeKeys = {x[0] for x in allMd5s}

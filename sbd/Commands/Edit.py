@@ -1,5 +1,6 @@
 import tempfile
 import re
+import os
 from .Command import Command
 from ..Logging import log
 from ..Database import Database

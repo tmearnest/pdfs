@@ -1,9 +1,5 @@
-import tempfile
-import re
-import os
 from .Command import Command
 from ..Database import Database
-from ..Logging import log
 from .. import UserException
 
 class Tag(Command):
@@ -25,4 +21,3 @@ class Tag(Command):
         e.tags = sorted((set(e.tags) | set(args.add)) - set(args.remove))
 
         db.save()
-
