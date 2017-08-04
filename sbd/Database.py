@@ -181,7 +181,7 @@ class Database:
             shutil.copyfile(fn, os.path.join(self.dataDir, newSiFname))
             entry.files.append(newSiFname)
             entry.md5s.append(md5)
-            entry.fileLabels.append(os.path.basename(filename))
+            entry.fileLabels.append(os.path.basename(fn))
 
         # ensure unique cite key 
         citeKeys = {x[0] for x in allMd5s}

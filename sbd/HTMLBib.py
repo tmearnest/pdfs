@@ -170,4 +170,4 @@ class HTMLBib(DisplayBib):
 
 
 def htmlBibliography(works, directory):
-    return _template.replace('BIB-BODY', '<br/>'.join(w.format(HTMLBib) for w in works)).replace('TITLE-DIR', directory)
+    return _template.replace('BIB-BODY', '<br/>'.join(HTMLBib(w).fmt() for w in works)).replace('TITLE-DIR', directory)

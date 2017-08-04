@@ -1,13 +1,6 @@
-import unicodedata
-import re
-from .unimap import separator_map, char_map
 from .Logging import log
 from .Crossref import crossrefLookup
-import textwrap
-
-_regularizeWsRe = re.compile(r"\s+")
-def _regularizeWs(x):
-    return _regularizeWsRe.sub(' ', x)
+from .Bibtex import bibtexFields, makeBibtex, makeCiteKey
 
 def _mergeDicts(*dicts):
     new_dict = dict()
@@ -22,121 +15,66 @@ def _parsePerson(au):
     ns = au['family'].split(' ')
     return ns[-1] + ", " + ' '.join(ns[:-1])
 
-def _unicodeNorm(x):
-    return unicodedata.normalize("NFKD", x).encode('ascii', 'ignore').decode()
+class TypeMapMeta(type):
+    def __new__(meta, name, bases, namespace):
+        cls = type.__new__(meta, name, bases, namespace)
 
-def _unicode2tex_sep(xs):
-    return ''.join(map(lambda x:separator_map.get(x,x), xs)).strip()
-
-def _unicode2tex_chr(xs):
-    return ''.join(map(lambda x:char_map.get(x,x), xs)).strip()
-
-def _unicode2tex(xs):
-    return _unicode2tex_chr(_unicode2tex_sep(xs))
-
-def _caseDist(xs):
-    n = len(xs)
-    l = sum(1 for x in xs if x.islower())
-    u = sum(1 for x in xs if x.isupper())
-    if len(xs) > 1:
-        l1 = sum(1 for x in xs[1:] if x.islower())
-        tcase = n-l1 == 1 and xs[0].isupper()
-    else:
-        tcase = False
-    return n, l, u, tcase
-
-def _btexPreserveCaps(xs):
-    letters = re.sub('[^a-zA-Z]+', '', xs)
-    n, l, u, _ = _caseDist(letters)
-    if n==l or n==u:
-        return xs.title()
-    tokens = re.split(r"((?:(?:\)|\])|(?:\?|!|\.|\,|;|:)|(?:\s+|-+)|(?:\(|\[))+)", xs)
-    words = tokens[0::2]
-    seps = tokens[1::2]
-    seps.append('')
-    escaped=''
-
-    for w,s in zip(words,seps):
-        n, l, u, tcase = _caseDist(w)
-        w = _unicode2tex_chr(w)
-        if n>1 and not tcase and l!=n and u>0:
-            escaped+="{{{}}}{}".format(w,s)
+        if not hasattr(meta, '_typeMap'):
+            meta._typeMap = dict()
         else:
-            escaped+="{}{}".format(w,s)
-    return escaped
+            if "_crossrefTypes" not in namespace:
+                raise AttributeError("Missing class attribute: _crossrefTypes")
+            for x in cls._crossrefTypes:
+                meta._typeMap[x] = cls
 
-def _bibKeyQuote(k,v):
-    if k == 'month':
-        st = v
-    elif k=='pages':
-        st =  "{" + re.sub('-+', '--', _unicode2tex_sep(v)) + "}"
-    elif k in ['title', 'booktitle', 'journal', 'publisher']:
-        st =  "{" + _btexPreserveCaps(_unicode2tex_sep(v)) + "}"
-    else:
-        try:
-            st =  str(int(v))
-        except ValueError:
-            st =  "{" + _unicode2tex(v) + "}"
-    return _regularizeWs(st)
+        return cls
 
-class EntryMeta(type):
-    def __new__(cls, name, parents, namespace):
-        allFields = ["author", "title", "booktitle", "series", "journal", "edition", 
-                      "editor", "institution", "organization", "publisher", "school", 
-                      "address", "chapter", "volume", "number", "pages", "year", 
-                      "month", "doi"]
-        namespace['_allFields'] = allFields
+class Entry(metaclass=TypeMapMeta):
+    _allFields = bibtexFields
+    def __init_subclass__(cls):
+        reqClsFields = dict(_reqFields=list, _optFields=list, btexType=str)
 
-        reqClsFields = dict(_crossrefTypes=list, _reqFields=list, _optFields=list, btexType=str)
-        if parents:
-            for attr,tp in reqClsFields.items():
-                if attr not in namespace or not isinstance(namespace[attr], tp):
-                    raise AttributeError("EntryMeta classes must have a {} attribute called {}".format(tp.__name__, attr))
+        for attr,tp in reqClsFields.items():
+            if attr not in dir(cls) or not isinstance(getattr(cls,attr), tp):
+                raise AttributeError("Entry subclasses must have a {} attribute called {}".format(tp.__name__, attr))
 
-        if parents:
-            sc = dir(parents[0])
-        else:
-            sc = []
-
-        for field in allFields:
+        for field in cls._allFields:
             dField  = "_dict_" + field
 
-            if dField not in namespace and dField not in sc:
-                namespace[dField] = lambda s: dict()
+            if not hasattr(cls, dField):
+                setattr(cls, dField, lambda s: dict())
 
-            namespace[field] = lambda s, field=field: getattr(s, "_dict_"+field)().get(field)
+            setattr(cls, field, lambda s, field=field: getattr(s, "_dict_"+field)().get(field))
 
-        if parents:
-            ts = namespace['_optFields'] + namespace['_reqFields']
+        okFields = cls._optFields + cls._reqFields
 
-            if 'authorOrEditor' in ts:
-                del ts[ts.index('authorOrEditor')]
-                ts.append('author')
-                ts.append('editor')
+        if 'authorOrEditor' in okFields:
+            del okFields[okFields.index('authorOrEditor')]
+            okFields.append('author')
+            okFields.append('editor')
 
-            if 'volumeOrNumber' in ts:
-                del ts[ts.index('volumeOrNumber')]
-                ts.append('volume')
-                ts.append('number')
+        if 'volumeOrNumber' in okFields:
+            del okFields[okFields.index('volumeOrNumber')]
+            okFields.append('volume')
+            okFields.append('number')
 
-            okFields = set(ts)
+        okFields = set(okFields)
 
-            for field in allFields:
-                if field not in okFields:
-                    namespace[field] = lambda s: None
+        for field in cls._allFields:
+            if field not in okFields:
+                setattr(cls, field, lambda s: None)
 
-        newCls = type.__new__(cls, name, parents, namespace)
+    def __init__(self, meta, fileLabels=None, citeKey=None, tags=None, files=None, md5s=None, bibtex=None):
+        if type(self) is Entry:
+            raise RuntimeError("Do not instantiate {} directly".format(type(self).__name__))
+        self.meta = meta
+        self.tags = tags or list()
+        self.files = files or list()
+        self.md5s = md5s or list()
+        self.fileLabels = fileLabels or list()
+        self._citeKey = citeKey or makeCiteKey(meta)
+        self.bibtex = bibtex or self.bibtexFromMetadata()
 
-        if not hasattr(cls, '_typeMap'):
-            cls._typeMap = dict()
-        else:
-            for x in newCls._crossrefTypes:
-                cls._typeMap[x] = newCls
-
-        return newCls
-
-
-class Entry(metaclass=EntryMeta):
     def key(self):
         return self._citeKey
 
@@ -168,17 +106,6 @@ class Entry(metaclass=EntryMeta):
                     files=self.files, fileLabels=self.fileLabels, 
                     md5s=self.md5s, bibtex=self.bibtex)
 
-    def __init__(self, meta, fileLabels=None, citeKey=None, tags=None, files=None, md5s=None, bibtex=None):
-        if type(self) == Entry:
-            raise RuntimeError("Do not instantiate {} directly".format(type(self)))
-        self.meta = meta
-        self.tags = tags or list()
-        self.files = files or list()
-        self.md5s = md5s or list()
-        self.fileLabels = fileLabels or list()
-        self._citeKey = citeKey or self._makeCiteKey()
-        self.bibtex = bibtex or self.bibtexFromMetadata()
-
     def bibtexFromMetadata(self):
         btexDict = dict()
 
@@ -194,43 +121,8 @@ class Entry(metaclass=EntryMeta):
             if d:
                 btexDict = _mergeDicts(btexDict, d)
 
-        bt = "@{type}{{{key},\n{keys}\n}}\n"
-        kvFmt = "    {:<10s}    =    {}"
-        prefix = kvFmt.format('','')
+        return makeBibtex(self.key(), self.btexType, btexDict)
 
-        def wrap(k,v):
-            l = kvFmt.format(k,_bibKeyQuote(k,v))
-            return textwrap.fill(l,width=100, initial_indent='', subsequent_indent=prefix)
-
-        
-
-        keys = ",\n".join(wrap(*itm) for itm in sorted(btexDict.items(), key=lambda x: self._allFields.index(x[0])))
-        return bt.format(type=self.btexType, key=self.key(), keys=keys)
-
-    def _makeCiteKey(self):
-        if 'author' in self.meta:
-            firstAuth = _unicodeNorm(self.meta['author'][0]['family'].split(' ')[0])
-        elif 'editor' in self.meta:
-            firstAuth = _unicodeNorm(self.meta['editor'][0]['family'].split(' ')[0])
-        else:
-            firstAuth = "Unknown"
-
-        firstAuth = re.sub(r'[^a-zA-Z]', '', firstAuth)
-
-        l = sum(1 for x in firstAuth if x.islower())
-        u = sum(1 for x in firstAuth if x.isupper())
-        n = len(firstAuth)
-        if l==n or u==n:
-            firstAuth = firstAuth.title()
-
-        year = str(self.meta['issued']['date-parts'][0][0])
-        try:
-            title = self.meta['title'][-1]
-            suffix = list(map(lambda x: x[0].lower(), title.split(' ')))
-            suffix = ''.join(suffix[:min(len(suffix),3)])
-        except IndexError:
-            suffix = 'XXX'
-        return firstAuth+year+suffix
 
     def _metadictpkg(self,k,cr=None):
         if not cr:
@@ -297,12 +189,3 @@ class Entry(metaclass=EntryMeta):
 
     def _dict_volumeOrNumber(self):
         return _mergeDicts(self._dict_volume(), self._dict_number())
-
-
-    def format(self, formatter, index=None):
-        if index:
-            self._index = str(index)
-        else:
-            self._index = None
-
-        return formatter(self).fmt()

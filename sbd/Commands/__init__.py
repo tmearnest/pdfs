@@ -1,12 +1,13 @@
-from .Command import Command
-from .Init import Init
 from .Add import Add
-from .List import List
-from .WWW import WWW
-from .WatchDir import WatchDir
 from .Aux2Bib import Aux2Bib
+from .Bibtex import Bibtex
+from .Command import Command
 from .Edit import Edit
+from .Init import Init
+from .List import List
 from .View import View
+from .WatchDir import WatchDir
+from .WWW import WWW
 
 def getCommandTypes():
     types = []

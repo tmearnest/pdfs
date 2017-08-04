@@ -21,4 +21,3 @@ class Attach(Command):
         e.tags = sorted((set(e.tags) | set(args.add)) - set(args.remove))
 
         db.save()
-

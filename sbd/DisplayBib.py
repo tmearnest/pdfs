@@ -1,5 +1,5 @@
 import re
-from .Entry import Entry
+from .Bibtex import bibtexFields
 
 _nameSepRe = re.compile(r"[., ]+")
 
@@ -18,19 +18,13 @@ def _limitAuthors(btexAuthors):
         s =  ', '.join(people[:-1]) + ', and ' + people[-1]
     return s
 
+class FieldDelegate:
+    def __init_subclass__(cls):
+        for field in bibtexFields + ['key']:
+            if not hasattr(cls, field):
+                setattr(cls, field, lambda s, field=field: getattr(s.entry,field)() )
 
-class DisplayBibMeta(type):
-    def __new__(cls, name, parents, dct):
-        modCls = type.__new__(cls, name, parents, dct)
-
-        # delegate fields to self.entry
-        for field in Entry._allFields + ['key']:
-            if not hasattr(modCls, field):
-                setattr(modCls, field, lambda s, field=field: getattr(s.entry,field)() )
-
-        return modCls
-
-class DisplayBib(metaclass=DisplayBibMeta):
+class DisplayBib(FieldDelegate):
     def __init__(self, e):
         self.entry = e
 
@@ -96,13 +90,16 @@ class DisplayBib(metaclass=DisplayBibMeta):
         return t
 
 
-    def fmt(self):
+    def fmt(self,index=None):
+        if index:
+            index = str(index)
+        self._index = index
         k = self.key_fmt()
         b = self.bib_fmt()
         return ' '.join(x for x in [k,b] if x)
 
     def index(self):
-        return self.entry._index
+        return self._index
 
     def editor(self):
         e = self.entry.editor()
