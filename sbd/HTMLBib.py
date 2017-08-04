@@ -162,9 +162,9 @@ class HTMLBib(DisplayBib):
 
     def bib_fmt(self):
         return ('<dd class="sbd">{ref}<br/>' +
-                '<a class="pdf" href="/{key}.pdf"></a> ' + 
-                '<a class="bib" href="/{key}.bib"></a> ' + 
-                '<a class="meta" href="/metadata/{key}"></a> ' + 
+                '<a class="pdf" target="_blank" href="/{key}.pdf"></a> ' + 
+                '<a class="bib" target="_blank" href="/{key}.bib"></a> ' + 
+                '<a class="meta" target="_blank" href="/metadata/{key}"></a> ' + 
                 '</dd>'
                ).format(ref=super().bib_fmt(), key=super().key())
 
