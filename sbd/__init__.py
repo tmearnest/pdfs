@@ -1,4 +1,8 @@
-import json
-import os
+class AbortException(Exception):
+    pass
 
-buildData = json.load(open(os.path.join(os.path.dirname(__file__),"build.json")))
+class EntryExistsException(Exception):
+    pass
+
+class UserException(Exception):
+    pass

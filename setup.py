@@ -3,37 +3,14 @@ from setuptools import setup
 import setuptools.command.build_py as duc
 
 pkgName = 'sbd'
-ver = '0.0.2'
+ver = '0.0.3'
 description='Simple bibliography manager'
 long_description=open("README.md").read().strip()
 
-
-class build_py(duc.build_py):
-      def run(self):
-            if not self.dry_run:
-                  target_dir = os.path.join(self.build_lib, pkgName)
-                  self.mkpath(target_dir)
-
-                  try:
-                        gitCmd = subprocess.check_output(["git", "log", "--pretty=format:%H", "-n", "1"]).decode()
-                  except:
-                        gitCmd = '<<not build under version control>>'
-
-                  buildData = dict(buildTime=time.strftime("%Y-%m-%d %H:%M:%S"),
-                                   name=pkgName,
-                                   version=ver,
-                                   gitHash=gitCmd,
-                                   user=getpass.getuser(),
-                                   host=socket.gethostname())
-
-                  json.dump(buildData, open(os.path.join(target_dir, "build.json"), "w"))
-
-            duc.build_py.run(self)
-
 setup(name=pkgName,
       version=ver,
-      cmdclass={'build_py': build_py},
-      packages=['sbd'],
+      cmdclass={'build_py': duc.build_py},
+      packages=['sbd', 'sbd.Commands'],
       description=description,
       long_description=long_description,
       author='Tyler M. Earnest',
@@ -42,7 +19,5 @@ setup(name=pkgName,
       url='http://tyler.ea.rne.st',
       license='MIT License',
       entry_points = {"console_scripts": ['sbd = sbd.__main__:main']},
-      install_requires = ["prompt_toolkit", "ftfy", "pypandoc", "inotify", "markdown",
-                          "flask", "termcolor", "whoosh", "pdfminer.six", "unidecode", 
-                          "pybtex", "requests"],
+      install_requires = ["prompt_toolkit", "inotify", "flask", "termcolor", "requests", "unidecode", "pdfminer.six", "pygments"],
       zip_safe=False)

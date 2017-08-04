@@ -1,26 +1,33 @@
 import re
 import os
+from . import *
 from .Prompt import promptOptions, promptString
-
 from .Logging import log
-from .BibFormat import formatBibEntries, concatBibliography
+from .Entry import Entry
+from .AnsiBib import printBibliography, printWork
+from .ReadPdf import getPdfTxt
 
-class AbortException(Exception):
-    pass
+_doiRegexStr= re.compile(r'10[.][0-9]{4,}[^\s"/<>]*/[^\s"<>]+')
 
-def extractDois(txt):
-    dois =  [x.group(0).lower() for x in re.finditer(r'(10\.\d{4,9}/[-._/:A-Za-z0-9]+[A-Za-z0-9])',txt)]
+def _chopPeriod(x):
+    if x[-1] == '.':
+        return x[:-1]
+    return x
+
+def extractDois(fname):
+    pdfData = getPdfTxt(fname)
+    dois = [_chopPeriod(x.lower()) for x in _doiRegexStr.findall(pdfData)]
     seen = set()
     return [x for x in dois if not (x in seen or seen.add(x))]
 
-def selectDoi(txt, fname, doiLookup):
-    dois = extractDois(txt)
+def entryFromPdf(fname):
+    dois = extractDois(fname)
     maxChoices = 5
 
     def chunker():
         lst = []
         for doi in dois:
-            obj = doiLookup(doi)
+            obj = Entry.from_doi(doi)
             if obj is not None:
                 lst.append(obj)
             if len(lst)==maxChoices:
@@ -32,17 +39,13 @@ def selectDoi(txt, fname, doiLookup):
     showMsg = True
     for chunkId, bibChunk in enumerate(chunker()):
         if len(bibChunk) == 1 and chunkId == 0:
+            printWork(bibChunk[0])
             return bibChunk[0]
         if showMsg:
             print("Found {} putative DOIs in {}:\n".format(len(dois), fname) )
             showMsg = False
 
-        bibs, keys = [], []
-        for bib in bibChunk:
-            k = bib.entries.keys()[0]
-            bibs.append(bib)
-            keys.append(k)
-        print(formatBibEntries(concatBibliography(bibs), keys))
+        printBibliography(bibChunk)
 
         choice = None
         while choice is None:
@@ -68,17 +71,17 @@ def selectDoi(txt, fname, doiLookup):
     return None
 
 
-def doiEntry(fname, doiLookup):
+def entryFromUser(fname):
     while True:
         doi = promptString("Enter DOI for {} ".format(os.path.basename(fname)))
         if doi.lower() == 'q':
             raise AbortException
-        bibData = doiLookup(doi)
+        bibData = Entry.from_doi(doi)
         if bibData is None:
             log.warning("Doi not found.")
             continue
 
-        print(formatBibEntries(bibData, list(bibData.entries.keys()), show_numbers=False))
+        printWork(bibData)
 
         response = promptOptions("OK" , ['y','n','q'], default='y')
 
