@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from .Command import cmd_init, cmd_add, cmd_search, cmd_watch, cmd_edit, cmd_bibtex, cmd_tags, cmd_notes
+from .Command import cmd_init, cmd_add, cmd_search, cmd_watch, cmd_edit, cmd_bibtex, cmd_tags, cmd_notes, cmd_export
 from .CaptureDoi import AbortException
 from .WwwApp import cmd_www
 from .Cache import RequestCache
@@ -72,6 +72,9 @@ def main():
     sp = subparsers.add_parser('edit', help="Edit bibtex")
     sp.add_argument('key', type=str, help='Cite key')
     sp.set_defaults(func=cmd_edit)
+
+    sp = subparsers.add_parser('export', help="Export doi & pdf_path")
+    sp.set_defaults(func=cmd_export)
 
     sp = subparsers.add_parser('bibtex', help="Get BibTeX")
     g = sp.add_mutually_exclusive_group(required=True)

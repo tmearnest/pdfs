@@ -22,7 +22,11 @@ def cmd_www(args):
         e = bdb.entries[citeKey]
         ctx = dict()
         
-        authors = e.persons['author'] or e.persons['editor']
+        try:
+            authors = e.persons['author'] 
+        except KeyError:
+            authors = e.persons['editor']
+
         if len(authors) == 1:
             ctx['authors'] = ' '.join(authors[0].last_names)
         elif len(authors) == 2:
@@ -67,7 +71,7 @@ def cmd_www(args):
 
     @flaskApp.route("/search")
     def search():
-        return flask.render_template('search.html', results=[entryContext(k) for k in db.getAllKeys()])
+        return flask.render_template('search.html', results=[entryContext(k) for k in sorted(db.getAllKeys())])
 
 
     @flaskApp.route('/pdf/<key>.pdf')

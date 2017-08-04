@@ -40,8 +40,9 @@ def doiLookup(doi):
                     break
             if len(suffix) == 3:
                 break
-        rawKey = '{}{}{}'.format(firstAuthor.replace('-', ''), year, suffix.lower())
-        citekey = unidecode(pypandoc.convert_text(ftfy.fix_text(rawKey), 'plain', format='latex').strip())
+        citekey = '{}{}{}'.format(firstAuthor, year, suffix.lower())
+        citekey = unidecode(pypandoc.convert_text(ftfy.fix_text(citekey), 'plain', format='latex').strip())
+        citekey = re.sub('[^A-Za-z0-9]', '', citekey)
 
         db.add_entry(citekey, e)
         empty = False

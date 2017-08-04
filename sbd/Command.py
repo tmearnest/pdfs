@@ -1,5 +1,6 @@
 import os
 import shutil
+import shlex
 import sys
 import tempfile
 import inotify.adapters
@@ -224,6 +225,13 @@ def cmd_search(args):
 
     log.info("%s result%s", "No" if resultCt == 0 else str(resultCt), "" if resultCt == 1 else "s")
 
+
+def cmd_export(args):
+    db = DB(args.dbFile)
+
+    for key, bib in db.getAll().entries.items():
+        fname = os.path.realpath(os.path.join(args.pdfDir,key+".pdf"))
+        print("sbd add {} --doi {}".format(shlex.quote(fname), shlex.quote(bib.fields['doi'])))
 
 def cmd_bibtex(args):
     db = DB(args.dbFile)
