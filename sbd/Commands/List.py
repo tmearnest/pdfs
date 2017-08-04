@@ -12,6 +12,7 @@ class List(Command):
         subparser.add_argument("--author", "-a", metavar='REGEX', type=str, default=None)
         subparser.add_argument("--year", "-y", metavar='REGEX', type=str, default=None)
         subparser.add_argument("--tag", "-T", metavar='TAG', type=str, default=None)
+        subparser.add_argument("--key", "-k", metavar='REGEX', type=str, default=None)
 
     def run(self, args):
         db = Database(dataDir=args.data_dir)
@@ -26,6 +27,7 @@ class List(Command):
         gen = match(gen, 'title', args.title)
         gen = match(gen, 'author', args.author)
         gen = match(gen, 'year', args.year)
+        gen = match(gen, 'key', args.key)
         if args.tag:
             gen = filter(lambda x: args.tag in x.tags, gen)
 

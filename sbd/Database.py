@@ -181,7 +181,7 @@ class Database:
             shutil.copyfile(fn, os.path.join(self.dataDir, newSiFname))
             entry.files.append(newSiFname)
             entry.md5s.append(md5)
-            entry.fileLabels.append(os.path.basename(fn))
+            entry.fileLabels.append(os.path.basename(filename))
 
         # ensure unique cite key 
         citeKeys = {x[0] for x in allMd5s}
@@ -200,6 +200,16 @@ class Database:
 
         self.works.append(entry)
         self.save()
+
+    def getFile(self, entryThing, name='PDF'):
+        if isinstance(entryThing, str):
+            entry = self.find(key=entryThing)
+        else:
+            entry = entryThing
+        i = entry.fileLabels.index(name)
+        fname = entry.files[i]
+        return os.path.join(self.dataDir, fname)
+    
 
     def delete(self, key):
         newWorks = [w for w in self.works if w.key() != key]

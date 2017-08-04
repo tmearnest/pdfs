@@ -6,6 +6,7 @@ from .WWW import WWW
 from .WatchDir import WatchDir
 from .Aux2Bib import Aux2Bib
 from .Edit import Edit
+from .View import View
 
 def getCommandTypes():
     types = []
