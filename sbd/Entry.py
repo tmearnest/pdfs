@@ -80,7 +80,6 @@ def _bibKeyQuote(k,v):
     return _regularizeWs(st)
 
 class EntryMeta(type):
-
     def __new__(cls, name, parents, namespace):
         allFields = ["author", "title", "booktitle", "series", "journal", "edition", 
                       "editor", "institution", "organization", "publisher", "school", 
@@ -88,6 +87,11 @@ class EntryMeta(type):
                       "month", "doi"]
         namespace['_allFields'] = allFields
 
+        reqClsFields = dict(_crossrefTypes=list, _reqFields=list, _optFields=list, btexType=str)
+        if parents:
+            for attr,tp in reqClsFields.items():
+                if attr not in namespace or not isinstance(namespace[attr], tp):
+                    raise AttributeError("EntryMeta classes must have a {} attribute called {}".format(tp.__name__, attr))
 
         if parents:
             sc = dir(parents[0])
