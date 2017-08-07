@@ -92,9 +92,6 @@ class Database:
             except StopIteration:
                 return
 
-
-
-    
     @staticmethod
     def getDataDir(*, dataDir=None):
         if not dataDir:
@@ -209,7 +206,6 @@ class Database:
         i = entry.fileLabels.index(name)
         fname = entry.files[i]
         return os.path.join(self.dataDir, fname)
-    
 
     def delete(self, key):
         newWorks = [w for w in self.works if w.key() != key]
