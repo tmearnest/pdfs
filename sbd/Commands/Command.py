@@ -1,18 +1,33 @@
-from abc import ABCMeta, abstractmethod
+class CommandMeta(type):
+    def __new__(meta, name, bases, namespace):
+        cls = type.__new__(meta, name, bases, namespace)
 
-class Command(metaclass=ABCMeta):
-    def __init__(self):
-        pass
+        if not hasattr(meta, 'commands'):
+            meta.commands = []
+        else:
+            meta.commands.append(cls)
 
-    @abstractmethod
-    def set_args(self, subparser):
-        pass
+        return cls
 
-    @abstractmethod
-    def run(self, args):
-        pass
+class Command(metaclass=CommandMeta):
+    def __init_subclass__(cls):
+        if not hasattr(cls, "set_args") or not callable(cls.set_args):
+            raise AttributeError("Command class needs set_args()")
+
+        if not hasattr(cls, "run") or not callable(cls.run):
+            raise AttributeError("Command class needs run()")
+
+        if not hasattr(cls, "command") or not isinstance(cls.command, str):
+            raise AttributeError("Command class needs command attribute")
+
+        if not hasattr(cls, "help") or not isinstance(cls.help, str):
+            raise AttributeError("Command class needs help attribute")
 
     def args(self, subparsers):
         self.sp = subparsers.add_parser(self.command, help=self.help)
         self.set_args(self.sp)
         self.sp.set_defaults(func=self.run)
+            
+def registerCommands(subparsers):
+    for cmdType in CommandMeta.commands:
+        cmdType().args(subparsers)

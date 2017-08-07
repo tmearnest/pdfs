@@ -4,7 +4,7 @@ import argparse
 from . import AbortException, UserException, EntryExistsException
 from .Database import Database
 from .Logging import log, loggingSetup
-from .Commands import getCommandTypes
+from .Commands import registerCommands
 from .Cache import RequestCache
 
 def main():
@@ -21,8 +21,7 @@ def main():
 
     subparsers = parser.add_subparsers(title='Commands')
 
-    for cmdType in getCommandTypes():
-        cmdType().args(subparsers)
+    registerCommands(subparsers)
 
     args = parser.parse_args()
     if args.debug:
