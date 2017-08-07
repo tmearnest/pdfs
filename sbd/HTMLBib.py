@@ -155,7 +155,7 @@ class HTMLBib(DisplayBib):
 
     def doi(self):
         d = super().doi()
-        return '<a class="doi" href="https://dx.doi.org/{d}">doi:{d}</a>'.format(d=d)
+        return '<a class="doi" target="_blank" href="https://dx.doi.org/{d}">doi:{d}</a>'.format(d=d)
 
     def key_fmt(self):
         return '<dt class="sbd">' + self.key() + "</dt>"
