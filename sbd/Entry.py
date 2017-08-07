@@ -1,3 +1,6 @@
+import datetime
+import dateutil.parser
+import dateutil.tz
 from .Logging import log
 from .Crossref import crossrefLookup
 from .Bibtex import bibtexFields, makeBibtex, makeCiteKey
@@ -58,7 +61,7 @@ class Entry(metaclass=TypeMapMeta):
             if field not in okFields:
                 setattr(cls, field, lambda s: None)
 
-    def __init__(self, meta, fileLabels=None, citeKey=None, tags=None, files=None, md5s=None, bibtex=None):
+    def __init__(self, meta, fileLabels=None, citeKey=None, tags=None, files=None, md5s=None, bibtex=None, importDate=None):
         if type(self) is Entry:
             raise RuntimeError("Do not instantiate {} directly".format(type(self).__name__))
         self.meta = meta
@@ -68,6 +71,20 @@ class Entry(metaclass=TypeMapMeta):
         self.fileLabels = fileLabels or list()
         self._citeKey = citeKey or makeCiteKey(meta)
         self.bibtex = bibtex or self.bibtexFromMetadata()
+
+        if importDate:
+            self.importDate = dateutil.parser.parse(importDate)
+        else:
+            self.importDate = datetime.datetime.now(dateutil.tz.tzlocal())
+
+        dt = meta['issued']['date-parts'][0].copy()
+        if len(dt) == 1:
+            dt += [1, 1]
+        elif len(dt) == 2:
+            dt += [1]
+
+        self.date = datetime.datetime(*dt)
+
 
     def key(self):
         return self._citeKey
@@ -98,6 +115,7 @@ class Entry(metaclass=TypeMapMeta):
     def toDict(self):
         return dict(meta=self.meta, citeKey=self.key(), tags=self.tags, 
                     files=self.files, fileLabels=self.fileLabels, 
+                    importDate=self.importDate.isoformat(),
                     md5s=self.md5s, bibtex=self.bibtex)
 
     def bibtexFromMetadata(self):

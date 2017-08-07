@@ -10,6 +10,6 @@ setup(name='sbd',
       url='https://github.com/tmearnest/sbd',
       license='MIT License',
       entry_points = {"console_scripts": ['sbd = sbd.__main__:main']},
-      install_requires = ["flask", "inotify", "pdfminer.six",
+      install_requires = ["dateutil", "flask", "inotify", "pdfminer.six",
                           "prompt_toolkit", "pygments", "requests",
                           "termcolor", "unidecode"])
