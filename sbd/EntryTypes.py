@@ -33,7 +33,7 @@ class JournalArticle(Entry):
 class ProceedingsArticle(Entry):
     _crossrefTypes = ["proceedings-article"]
     _reqFields=["doi", "author", "title", "booktitle", "year"]
-    _optFields=["editor", "volumeOrNumber", "series", "pages", "address", "month", "organization", "publisher"]
+    _optFields=["editor", "volume/number", "series", "pages", "address", "month", "organization", "publisher"]
     btexType = "inproceedings"
 
     def _dict_address(self):
@@ -52,7 +52,7 @@ class ProceedingsArticle(Entry):
 class BookChapter(Entry):
     _crossrefTypes = ["book-chapter"]
     _reqFields=["doi", "author", "title", "booktitle", "publisher", "year"]
-    _optFields=["editor", "volumeOrNumber", "series", "chapter", "pages", "address", "edition", "month"]
+    _optFields=["editor", "volume/number", "series", "chapter", "pages", "address", "edition", "month"]
     btexType="incollection"
 
     def _dict_booktitle(self):
@@ -67,8 +67,8 @@ class BookChapter(Entry):
         return v
 
 class Book(Entry):
-    _reqFields=["doi", "authorOrEditor", "title", "publisher", "year"]
-    _optFields=["volumeOrNumber", "series", "address", "edition", "month"]
+    _reqFields=["doi", "author/editor", "title", "publisher", "year"]
+    _optFields=["volume/number", "series", "address", "edition", "month"]
     _crossrefTypes = ["book", "reference-book"]
     btexType="book"
 

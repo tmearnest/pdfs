@@ -46,19 +46,13 @@ class Entry(metaclass=TypeMapMeta):
 
             setattr(cls, field, lambda s, field=field: getattr(s, "_dict_"+field)().get(field))
 
-        okFields = cls._optFields + cls._reqFields
+        okFields = set(cls._optFields + cls._reqFields)
 
-        if 'authorOrEditor' in okFields:
-            del okFields[okFields.index('authorOrEditor')]
-            okFields.append('author')
-            okFields.append('editor')
-
-        if 'volumeOrNumber' in okFields:
-            del okFields[okFields.index('volumeOrNumber')]
-            okFields.append('volume')
-            okFields.append('number')
-
-        okFields = set(okFields)
+        for x in okFields:
+            fs = x.split()
+            if len(fs) > 1:
+                del okFields[okFields.index(x)]
+                okFields.update(fs)
 
         for field in cls._allFields:
             if field not in okFields:
