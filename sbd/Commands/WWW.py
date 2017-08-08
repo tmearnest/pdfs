@@ -1,7 +1,10 @@
-import flask
+import json
+import logging
 import mimetypes
 import os
-import json
+
+import flask
+import jinja2
 
 from pygments import highlight
 from pygments.lexers.data import JsonLexer
@@ -10,19 +13,7 @@ from pygments.formatters import HtmlFormatter
 from .Command import Command
 from ..Database import Database
 from ..HTMLBib import htmlBibliography
-from .. import UserException
-
-_htmlBoilerplate = """<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>{title}</title>
-  </head>
-  <body>
-  {body}
-  </body>
-</html>
-"""
+from ..Exceptions import UserException
 
 class WWW(Command):
     command = 'www'
@@ -32,8 +23,12 @@ class WWW(Command):
         subparser.add_argument("--port","-P", help="Port number to listen on", type=int, default=5000)
 
     def run(self, args):
+        if not args.debug:
+            logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
         Database(dataDir=args.data_dir)
         flaskApp = flask.Flask("sbd")
+        flaskApp.jinja_loader=jinja2.PackageLoader("sbd")
 
         @flaskApp.route('/<key>.pdf')
         def getPdf(key):
@@ -60,8 +55,6 @@ class WWW(Command):
             resp.content_type = mime or 'application/octet-stream'
             return resp
 
-
-
         @flaskApp.route('/<key>.bib')
         def getBib(key):
             db = Database(dataDir=args.data_dir)
@@ -73,7 +66,6 @@ class WWW(Command):
             resp.content_type = 'text/plain'
             return resp
 
-
         @flaskApp.route("/metadata/<key>")
         def getMeta(key):
             db = Database(dataDir=args.data_dir)
@@ -82,18 +74,13 @@ class WWW(Command):
             except StopIteration:
                 raise KeyError
             html = highlight(json.dumps(e.meta, indent=4, sort_keys=True),JsonLexer(), HtmlFormatter(noclasses=True))
-
-            resp = flask.make_response(_htmlBoilerplate.format(title="sdb: {} metadata".format(key), body=html))
-            resp.content_type = 'text/html'
-            return resp
+            return flask.render_template('blank.html', title="sdb: {} metadata".format(key), body=html)
 
         @flaskApp.route('/')
         def listFiles():
             db = Database(dataDir=args.data_dir)
-            bib = htmlBibliography(sorted(db.works, key=lambda x: x.key()), directory=os.path.basename(os.path.dirname(db.dataDir)))
-            resp = flask.make_response(bib)
-            resp.content_type = 'text/html'
-            return resp
+            bib = htmlBibliography(sorted(db.works, key=lambda x: x.key()))
+            return flask.render_template('bibliography.html', article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib)
 
         try:
             flaskApp.run(port=args.port)

@@ -8,9 +8,9 @@ import hashlib
 import unicodedata
 
 from .Logging import log
-from . import EntryExistsException, UserException
-from .Entry import Entry
-from .EntryTypes import *
+from .Exceptions import WorkExistsException, UserException
+from .BaseWork import Work
+from .WorkTypes import *
 
 
 def md5sum(fname):
@@ -114,7 +114,7 @@ class Database:
         self.metaFile= os.path.join(dataDir, ".metadata.json")
         self.metaLockFile = os.path.join(dataDir, ".metadata.lck")
         with FileLock(self.metaLockFile):
-            self.works = [Entry.from_db(**d) for d in json.load(open(os.path.join(dataDir, ".metadata.json")))]
+            self.works = [Work.from_db(**d) for d in json.load(open(os.path.join(dataDir, ".metadata.json")))]
 
     def save(self):
         with FileLock(self.metaLockFile):
@@ -161,9 +161,9 @@ class Database:
         # Check for existing pdf
         pdfMd5 = md5sum(pdfFname)
         allMd5s = self._md5s()
-        otherEntry = self.find(pdfFname=pdfFname)
-        if otherEntry:
-            raise EntryExistsException("{} already exists in database with key {}".format(os.path.basename(pdfFname), otherEntry.key()))
+        otherWork = self.find(pdfFname=pdfFname)
+        if otherWork:
+            raise WorkExistsException("{} already exists in database with key {}".format(os.path.basename(pdfFname), otherWork.key()))
 
         # copy files
         newPdfFname =  _nameDbFile(entry, pdfFname, 0)
@@ -214,3 +214,16 @@ class Database:
         
         self.works = newWorks
         self.save()
+
+    def copyFromDb(self, dbSrc, key):
+        eSrc = dbSrc.find(key=key)
+        eDst = Work.from_db(**eSrc.toDict())
+
+        for lbl in eDst.fileLabels:
+            srcFile = dbSrc.getFile(eSrc, lbl)
+            dstFile = self.getFile(eDst, lbl)
+            shutil.copyfile(srcFile, dstFile)
+
+        self.works.append(eDst)
+        self.save()
+        return eDst

@@ -1,114 +1,6 @@
-from .DisplayBib import DisplayBib
+from .BibFormatter import BibFormatter
 
-_template = """
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>sdb: TITLE-DIR</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css?family=Crimson+Text:400,400i,700,700i|Lato:300,900');
-        div.sbd {
-            font-family: 'Crimson Text', serif;
-            font-weight: 400;
-            margin: 2em auto;
-            max-width: 900px;
-        }
-        dt.sbd {
-            font-family: 'Lato', sans-serif;
-            font-weight: 300;
-        }
-
-        span.label {
-            font-family: 'Lato', sans-serif;
-            font-weight: 300;
-            font-size: 0.8em;
-        }
-
-        a {
-            text-decoration: none;
-            color: black;
-        }
-
-        a.doi:hover {
-            text-decoration: underline;
-        }
-
-        a.attachment {
-            text-decoration: none;
-            font-style: italic;
-            color: #41af00;
-        }
-
-        a.doi:attachment {
-            text-decoration: underline;
-        }
-
-        span.tag {
-            font-family: 'Lato', sans-serif;
-            color: #a00;
-            font-weight: 900;
-            padding: 0.1em 0.5em;
-        }
-
-        a.meta {
-            font-family: 'Lato', sans-serif;
-            font-weight: 900;
-            font-size: 0.8em;
-            color: white;
-            padding: 0.1em 0.5em;
-            text-decoration: none;
-            border-radius: 0.2em;
-            background-color: hsl(30, 99%, 38%);
-        }
-
-        a.meta::before {
-            content: "Meta";
-        }
-
-
-        a.pdf {
-            font-family: 'Lato', sans-serif;
-            font-weight: 900;
-            font-size: 0.8em;
-            color: white;
-            padding: 0.1em 0.5em;
-            text-decoration: none;
-            border-radius: 0.2em;
-            background-color: hsl(352, 51%, 37%);
-        }
-
-        a.pdf::before {
-            content: "PDF";
-        }
-
-        a.bib {
-            font-family: 'Lato', sans-serif;
-            font-weight: 900;
-            font-size: 0.8em;
-            color: white;
-            padding: 0.1em 0.5em;
-            text-decoration: none;
-            border-radius: 0.2em;
-            background-color: #3f3f7a;
-        }
-        a.bib::before {
-            content: "BIB";
-        }
-    </style>
-  </head>
-  <body>
-    <div class="sbd">
-       <h1>Articles under “TITLE-DIR”</h1>
-       <dl>
-           BIB-BODY
-       </dl>
-    </div>
-  </body>
-</html>
-"""
-
-class HTMLBib(DisplayBib):
+class HTMLBib(BibFormatter):
     def tag(self, t):
         return '<span class="tag">{}</span>'.format(t)
 
@@ -168,6 +60,5 @@ class HTMLBib(DisplayBib):
                 '</dd>'
                ).format(ref=super().bib_fmt(), key=super().key())
 
-
-def htmlBibliography(works, directory):
-    return _template.replace('BIB-BODY', '<br/>'.join(HTMLBib(w).fmt() for w in works)).replace('TITLE-DIR', directory)
+def htmlBibliography(works ):
+    return '<br/>'.join(HTMLBib(w).fmt() for w in works)

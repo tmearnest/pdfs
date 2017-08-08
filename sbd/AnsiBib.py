@@ -1,7 +1,7 @@
 import termcolor as tc
 import shutil
 import re
-from .DisplayBib import DisplayBib
+from .BibFormatter import BibFormatter
 
 _ansiRe = re.compile(r"((?:\x1b\[[0-9;]+?m)+)")
 _wsRe = re.compile(r"(\s+)")
@@ -10,7 +10,7 @@ def _clr(s, c, attrs=None):
     if s:
         return  tc.colored(s, c, attrs=attrs)
 
-class AnsiBib(DisplayBib):
+class AnsiBib(BibFormatter):
     def tag(self, t):
         return tc.colored(t, 'red', attrs=['bold'])
 

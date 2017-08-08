@@ -4,24 +4,10 @@ import os
 from .Command import Command
 from ..Logging import log
 from ..Database import Database
-from .. import UserException
+from ..Exceptions import UserException
+from ..Bibtex import bibtexTypes
 
-_btexTypes = ["article",
-              "book",
-              "booklet",
-              "conference",
-              "inbook",
-              "incollection",
-              "inproceedings",
-              "manual",
-              "mastersthesis",
-              "misc",
-              "phdthesis",
-              "proceedings",
-              "techreport",
-              "unpublished"]
-
-_keyRe = re.compile(r"\s*@\s*(?:"+'|'.join(_btexTypes)+r")\s*\{\s*([^\s,]+)\s*,")
+_keyRe = re.compile(r"\s*@\s*(?:"+'|'.join(bibtexTypes)+r")\s*\{\s*([^\s,]+)\s*,")
 
 class Edit(Command):
     command = 'edit'

@@ -12,12 +12,6 @@ def _mergeDicts(*dicts):
             new_dict[k] = v
     return new_dict
 
-def _parsePerson(au):
-    if 'given' in au:
-        return au['family'] + ', ' + au['given']
-    ns = au['family'].split(' ')
-    return ns[-1] + ", " + ' '.join(ns[:-1])
-
 class TypeMapMeta(type):
     def __new__(meta, name, bases, namespace):
         cls = type.__new__(meta, name, bases, namespace)
@@ -32,14 +26,14 @@ class TypeMapMeta(type):
 
         return cls
 
-class Entry(metaclass=TypeMapMeta):
+class Work(metaclass=TypeMapMeta):
     _allFields = bibtexFields
     def __init_subclass__(cls):
         reqClsFields = dict(_reqFields=list, _optFields=list, btexType=str)
 
         for attr,tp in reqClsFields.items():
             if attr not in dir(cls) or not isinstance(getattr(cls,attr), tp):
-                raise AttributeError("Entry subclasses must have a {} attribute called {}".format(tp.__name__, attr))
+                raise AttributeError("Work subclasses must have a {} attribute called {}".format(tp.__name__, attr))
 
         for field in cls._allFields:
             dField  = "_dict_" + field
@@ -49,20 +43,21 @@ class Entry(metaclass=TypeMapMeta):
 
             setattr(cls, field, lambda s, field=field: getattr(s, "_dict_"+field)().get(field))
 
-        okFields = set(cls._optFields + cls._reqFields)
+        okFields = set()
 
-        for x in okFields:
-            fs = x.split()
+        for x in set(cls._optFields + cls._reqFields):
+            fs = x.split('_or_')
             if len(fs) > 1:
-                del okFields[okFields.index(x)]
                 okFields.update(fs)
+            else:
+                okFields.add(x)
 
         for field in cls._allFields:
             if field not in okFields:
                 setattr(cls, field, lambda s: None)
 
     def __init__(self, meta, fileLabels=None, citeKey=None, tags=None, files=None, md5s=None, bibtex=None, importDate=None):
-        if type(self) is Entry:
+        if type(self) is Work:
             raise RuntimeError("Do not instantiate {} directly".format(type(self).__name__))
         self.meta = meta
         self.tags = tags or list()
@@ -85,15 +80,6 @@ class Entry(metaclass=TypeMapMeta):
 
         self.date = datetime.datetime(*dt)
 
-
-    def key(self):
-        return self._citeKey
-
-    def set_key(self, newKey):
-        if hasattr(self, "bibtex"):
-            self.bibtex = self.bibtex.replace(self._citeKey, newKey)
-        self._citeKey = newKey
-
     @classmethod
     def from_doi(cls, doi):
         meta = crossrefLookup(doi)
@@ -112,6 +98,14 @@ class Entry(metaclass=TypeMapMeta):
         except KeyError:
             raise ValueError("Unrecognized work type: "+tp)
 
+    def key(self):
+        return self._citeKey
+
+    def set_key(self, newKey):
+        if hasattr(self, "bibtex"):
+            self.bibtex = self.bibtex.replace(self._citeKey, newKey)
+        self._citeKey = newKey
+
     def toDict(self):
         return dict(meta=self.meta, citeKey=self.key(), tags=self.tags, 
                     files=self.files, fileLabels=self.fileLabels, 
@@ -126,7 +120,7 @@ class Entry(metaclass=TypeMapMeta):
             if d:
                 btexDict = _mergeDicts(btexDict, d)
             else:
-                log.debug("%s missing %s", self.meta['DOI'],field)
+                log.warning("%s/%s (doi:%s) missing field: %s", self.key(), self.btexType, self.meta['DOI'], field)
 
         for field in self._optFields:
             d = getattr(self, "_dict_"+field)()
@@ -135,8 +129,16 @@ class Entry(metaclass=TypeMapMeta):
 
         return makeBibtex(self.key(), self.btexType, btexDict)
 
+    def _strPeople(self,key):
+        def person(au):
+            if 'given' in au:
+                return au['family'] + ', ' + au['given']
+            ns = au['family'].split(' ')
+            return ns[-1] + ", " + ' '.join(ns[:-1])
 
-    def _metadictpkg(self,k,cr=None):
+        return " and ".join(person(au) for au in self.meta[key])
+
+    def _mkMetaDict(self,k,cr=None):
         if not cr:
             cr = k
         if cr in self.meta:
@@ -144,28 +146,28 @@ class Entry(metaclass=TypeMapMeta):
         return dict()
 
     def _dict_doi(self):
-        return self._metadictpkg('doi', 'DOI')
+        return self._mkMetaDict('doi', 'DOI')
     
     def _dict_address(self):
-        return self._metadictpkg('address', 'publisher-location')
+        return self._mkMetaDict('address', 'publisher-location')
 
-    def _dict_authorOrEditor(self):
+    def _dict_author_or_editor(self):
         return _mergeDicts(self._dict_author(), self._dict_editor())
 
     def _dict_author(self):
         v = dict()
         if 'author' in self.meta:
-            v['author'] = " and ".join(_parsePerson(a) for a in self.meta['author'])
+            v['author'] = self._strPeople('author')
         return v
 
     def _dict_editor(self):
         v = dict()
         if 'editor' in self.meta:
-            v['editor'] = " and ".join(_parsePerson(a) for a in self.meta['editor'])
+            v['editor'] = self._strPeople('editor')
         return v
 
     def _dict_institution(self):
-        return self._metadictpkg('institution', 'publisher')
+        return self._mkMetaDict('institution', 'publisher')
 
     def _dict_month(self):
         v = dict()
@@ -177,18 +179,17 @@ class Entry(metaclass=TypeMapMeta):
     def _dict_year(self):
         v = dict()
         date = self.meta['issued']['date-parts'][0]
-        if date:
-            v['year'] = date[0]
+        v['year'] = date[0]
         return v
 
     def _dict_number(self):
-        return self._metadictpkg('number', 'issue')
+        return self._mkMetaDict('number', 'issue')
 
     def _dict_publisher(self):
-        return self._metadictpkg('publisher')
+        return self._mkMetaDict('publisher')
 
     def _dict_pages(self):
-        return self._metadictpkg('pages', 'page')
+        return self._mkMetaDict('pages', 'page')
 
     def _dict_title(self):
         v = dict()
@@ -197,7 +198,7 @@ class Entry(metaclass=TypeMapMeta):
         return v
 
     def _dict_volume(self):
-        return self._metadictpkg('volume')
+        return self._mkMetaDict('volume')
 
-    def _dict_volumeOrNumber(self):
+    def _dict_volume_or_number(self):
         return _mergeDicts(self._dict_volume(), self._dict_number())

@@ -1,9 +1,9 @@
 import re
 import os
-from . import AbortException
+from .Exceptions import AbortException
 from .Prompt import promptOptions, promptString
 from .Logging import log
-from .Entry import Entry
+from .BaseWork import Work
 from .AnsiBib import printBibliography, printWork
 from .ReadPdf import getPdfTxt
 
@@ -28,7 +28,7 @@ def entryFromPdf(fname):
         lst = []
         for doi in dois:
             try:
-                lst.append(Entry.from_doi(doi))
+                lst.append(Work.from_doi(doi))
             except ValueError:
                 pass
             
@@ -79,7 +79,7 @@ def entryFromUser(fname):
         doi = promptString("Enter DOI for {} ".format(os.path.basename(fname)))
         if doi.lower() == 'q':
             raise AbortException
-        bibData = Entry.from_doi(doi)
+        bibData = Work.from_doi(doi)
         if bibData is None:
             log.warning("Doi not found.")
             continue

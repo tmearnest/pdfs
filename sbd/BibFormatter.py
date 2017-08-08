@@ -24,7 +24,7 @@ class FieldDelegate:
             if not hasattr(cls, field):
                 setattr(cls, field, lambda s, field=field: getattr(s.entry,field)() )
 
-class DisplayBib(FieldDelegate):
+class BibFormatter(FieldDelegate):
     def __init__(self, e):
         self.entry = e
 
@@ -74,7 +74,6 @@ class DisplayBib(FieldDelegate):
 
         return s
 
-
     def tags_fmt(self):
         if self.entry.tags:
             return 'tags: {' + ', '.join(self.tag(t) for t in self.entry.tags) + '}'
@@ -88,7 +87,6 @@ class DisplayBib(FieldDelegate):
 
     def tag(self, t):
         return t
-
 
     def fmt(self,index=None):
         if index:

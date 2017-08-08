@@ -4,8 +4,8 @@ from pdfminer.pdfparser import PDFSyntaxError
 from .Command import Command
 from ..Database import Database
 from ..Logging import log
-from ..DoiExtract import entryFromUser, entryFromPdf
-from .. import EntryExistsException, AbortException
+from ..ExtractDoi import entryFromUser, entryFromPdf
+from ..Exceptions import WorkExistsException, AbortException
 
 class WatchDir(Command):
     command = 'watch'
@@ -38,12 +38,12 @@ class WatchDir(Command):
                             db = Database(dataDir=args.data_dir)
                             k = db.find(pdfFname=newFilePath)
                             if k:
-                                raise EntryExistsException("new file {} exists in database as {}".format(newFile, k))
+                                raise WorkExistsException("new file {} exists in database as {}".format(newFile, k))
                             else:
                                 log.info("new file: %s", newFile)
                                 entry = entryFromPdf(newFilePath) or entryFromUser(newFilePath)
                                 db.add(entry, newFilePath, [], [])
-                        except EntryExistsException as e:
+                        except WorkExistsException as e:
                             log.warning(str(e))
                         except AbortException:
                             log.warning("PDF import aborted")

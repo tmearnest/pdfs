@@ -1,7 +1,7 @@
 from .Command import Command
 from ..Database import Database
-from ..Entry import Entry
-from ..DoiExtract import entryFromUser, entryFromPdf
+from ..BaseWork import Work
+from ..ExtractDoi import entryFromUser, entryFromPdf
 from ..AnsiBib import printWork
 
 class Add(Command):
@@ -17,7 +17,7 @@ class Add(Command):
     def run(self, args):
         db = Database(dataDir=args.data_dir)
         if args.doi:
-            entry = Entry.from_doi(args.doi)
+            entry = Work.from_doi(args.doi)
             printWork(entry)
         else:
             entry = entryFromPdf(args.file) or entryFromUser(args.file)

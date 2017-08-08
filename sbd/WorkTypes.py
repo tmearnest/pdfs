@@ -1,12 +1,12 @@
-from .Entry import Entry
+from .BaseWork import Work
 
-class TechReport(Entry):
+class TechReport(Work):
     btexType="techreport"
     _crossrefTypes = ['report']
     _reqFields=["doi", "author", "title", "institution", "year"]
     _optFields=["number", "address", "month"]
 
-class Dissertation(Entry):
+class Dissertation(Work):
     _crossrefTypes = ['dissertation']
     _reqFields = ["doi", "author", "title", "school", "year"]
     _optFields = ["address", "month"]
@@ -18,7 +18,7 @@ class Dissertation(Entry):
             v['school'] = self.meta['publisher']
         return v
 
-class JournalArticle(Entry):
+class JournalArticle(Work):
     _crossrefTypes = ['journal-article', "reference-entry", "posted-content"]
     _reqFields=["doi", "author", "title", "journal", "year", "volume"]
     _optFields=["number", "pages", "month"]
@@ -30,10 +30,10 @@ class JournalArticle(Entry):
             v['journal']  = self.meta['container-title'][0]
         return v
 
-class ProceedingsArticle(Entry):
+class ProceedingsArticle(Work):
     _crossrefTypes = ["proceedings-article"]
     _reqFields=["doi", "author", "title", "booktitle", "year"]
-    _optFields=["editor", "volume/number", "series", "pages", "address", "month", "organization", "publisher"]
+    _optFields=["editor", "volume_or_number", "series", "pages", "address", "month", "organization", "publisher"]
     btexType = "inproceedings"
 
     def _dict_address(self):
@@ -49,10 +49,10 @@ class ProceedingsArticle(Entry):
             v['booktitle'] = self.meta['event']['name']
         return v
 
-class BookChapter(Entry):
+class BookChapter(Work):
     _crossrefTypes = ["book-chapter"]
     _reqFields=["doi", "author", "title", "booktitle", "publisher", "year"]
-    _optFields=["editor", "volume/number", "series", "chapter", "pages", "address", "edition", "month"]
+    _optFields=["editor", "volume_or_number", "series", "chapter", "pages", "address", "edition", "month"]
     btexType="incollection"
 
     def _dict_booktitle(self):
@@ -66,9 +66,9 @@ class BookChapter(Entry):
             v['series'] = self.meta['container-title'][0]
         return v
 
-class Book(Entry):
-    _reqFields=["doi", "author/editor", "title", "publisher", "year"]
-    _optFields=["volume/number", "series", "address", "edition", "month"]
+class Book(Work):
+    _reqFields=["doi", "author_or_editor", "title", "publisher", "year"]
+    _optFields=["volume_or_number", "series", "address", "edition", "month"]
     _crossrefTypes = ["book", "reference-book"]
     btexType="book"
 

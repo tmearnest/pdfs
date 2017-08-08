@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>sdb: {{article_dir}}</title>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}"/>
+    <link rel="shortcut icon"  href="{{url_for('static', filename='favicon.ico')}}"/>
+  </head>
+  <body>
+    <div class="sbd">
+       <h1>Articles under “{{article_dir}}”</h1>
+       <dl>
+           {{body|safe}}
+       </dl>
+    </div>
+  </body>
+</html>

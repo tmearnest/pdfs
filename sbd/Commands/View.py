@@ -1,7 +1,7 @@
 import subprocess
 from .Command import Command
 from ..Database import Database
-from .. import UserException
+from ..Exceptions import UserException
 
 class View(Command):
     command = 'view'

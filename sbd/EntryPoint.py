@@ -1,10 +1,11 @@
 import os
 import sys
 import argparse
-from . import AbortException, UserException, EntryExistsException
+from .Exceptions import AbortException, UserException, WorkExistsException
 from .Database import Database
 from .Logging import log, loggingSetup
-from .Commands import registerCommands
+from .Commands import *
+from .Commands.Command import Registry
 from .Cache import RequestCache
 
 def main():
@@ -21,7 +22,8 @@ def main():
 
     subparsers = parser.add_subparsers(title='Commands')
 
-    registerCommands(subparsers)
+    for cmdType in Registry.commands:
+        cmdType().args(subparsers)
 
     args = parser.parse_args()
     if args.debug:
@@ -50,7 +52,7 @@ def main():
             raise
         else:
             sys.exit(1)
-    except EntryExistsException as e:
+    except WorkExistsException as e:
         log.error(str(e))
         if args.debug:
             raise

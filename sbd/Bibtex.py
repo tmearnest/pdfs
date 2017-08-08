@@ -3,6 +3,10 @@ import unicodedata
 import textwrap
 from .unimap import separator_map, char_map
 
+bibtexTypes = ["article", "book", "booklet", "conference", "inbook", "incollection",
+              "inproceedings", "manual", "mastersthesis", "misc", "phdthesis",
+              "proceedings", "techreport", "unpublished"]
+
 
 bibtexFields = ["author", "title", "booktitle", "series", "journal", "edition", 
               "editor", "institution", "organization", "publisher", "school", 

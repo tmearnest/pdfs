@@ -1,4 +1,4 @@
-class CommandMeta(type):
+class Registry(type):
     def __new__(meta, name, bases, namespace):
         cls = type.__new__(meta, name, bases, namespace)
 
@@ -9,7 +9,7 @@ class CommandMeta(type):
 
         return cls
 
-class Command(metaclass=CommandMeta):
+class Command(metaclass=Registry):
     def __init_subclass__(cls):
         if not hasattr(cls, "set_args") or not callable(cls.set_args):
             raise AttributeError("Command class needs set_args()")
@@ -27,7 +27,3 @@ class Command(metaclass=CommandMeta):
         self.sp = subparsers.add_parser(self.command, help=self.help)
         self.set_args(self.sp)
         self.sp.set_defaults(func=self.run)
-            
-def registerCommands(subparsers):
-    for cmdType in CommandMeta.commands:
-        cmdType().args(subparsers)
