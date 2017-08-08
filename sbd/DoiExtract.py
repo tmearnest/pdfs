@@ -27,9 +27,11 @@ def entryFromPdf(fname):
     def chunker():
         lst = []
         for doi in dois:
-            obj = Entry.from_doi(doi)
-            if obj is not None:
-                lst.append(obj)
+            try:
+                lst.append(Entry.from_doi(doi))
+            except ValueError:
+                pass
+            
             if len(lst)==maxChoices:
                 yield lst
                 lst = []
