@@ -78,7 +78,7 @@ def _bibKeyQuote(k,v):
 def makeBibtex(key, btexType, btexDict):
     bt = "@{type}{{{key},\n{keys}\n}}\n"
     kvFmt = "    {:<10s}    =    {}"
-    prefix = kvFmt.format('','')
+    prefix = ' '*len(kvFmt.format('',''))
 
     def wrap(k,v):
         l = kvFmt.format(k,_bibKeyQuote(k,v))

@@ -119,7 +119,7 @@ class WWW(Command):
                         -d.minute, 
                         -d.second, 
                         x.key())
-            ctx = dict(entries=htmlBibliography(sorted(db.works, key=key)),
+            ctx = dict(entries=bibContext(sorted(db.works, key=key)),
                        article_dir=os.path.basename(os.path.dirname(db.dataDir)), 
                        tags=mkTagList(db))
             return flask.render_template('bibliography.html', **ctx)
