@@ -79,4 +79,4 @@ def printBibliography(works):
         printWork(w, index=i+1)
 
 def printWork(work, index=None):
-    print(AnsiBib(work).fmt(index=index))
+    print(AnsiBib(work, index).fmt())

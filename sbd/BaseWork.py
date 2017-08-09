@@ -80,6 +80,9 @@ class Work(metaclass=TypeMapMeta):
 
         self.date = datetime.datetime(*dt)
 
+    def timestamp(self):
+        return '{:%Y-%m-%d %H:%M}'.format(self.importDate)
+
     @classmethod
     def from_doi(cls, doi):
         meta = crossrefLookup(doi)

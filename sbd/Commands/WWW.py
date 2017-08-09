@@ -12,8 +12,13 @@ from pygments.formatters import HtmlFormatter
 
 from .Command import Command
 from ..Database import Database
-from ..HTMLBib import htmlBibliography
+from ..HTMLBib import htmlBibliography, authorNorm
 from ..Exceptions import UserException
+
+
+def mkTagList(db):
+    if db.tags:
+        return ' '.join('<a class="tags" href="/tag/{0}">{0}</a>'.format(t) for t in sorted(db.tags))
 
 class WWW(Command):
     command = 'www'
@@ -76,11 +81,56 @@ class WWW(Command):
             html = highlight(json.dumps(e.meta, indent=4, sort_keys=True),JsonLexer(), HtmlFormatter(noclasses=True))
             return flask.render_template('blank.html', title="sdb: {} metadata".format(key), body=html)
 
+        @flaskApp.route('/tag/<tag>')
+        def listFilesByTag(tag):
+            db = Database(dataDir=args.data_dir)
+            matches = sorted(filter(lambda x: tag in x.tags, db.works), key=lambda x: x.key())
+            if matches:
+                bib = htmlBibliography(matches)
+            else:
+                bib = "No entries with tag: " + tag
+            return flask.render_template('bibliography.html', search="tag:"+tag, article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
+            
         @flaskApp.route('/')
         def listFiles():
             db = Database(dataDir=args.data_dir)
             bib = htmlBibliography(sorted(db.works, key=lambda x: x.key()))
-            return flask.render_template('bibliography.html', article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib)
+            return flask.render_template('bibliography.html', article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
+
+        @flaskApp.route('/author/<author>')
+        def listFilesByAuthor(author):
+            db = Database(dataDir=args.data_dir)
+
+            def isAuth(e):
+                n, au, ed = set(), e.author(), e.editor()
+                if au:
+                    n.update(authorNorm(x.split(', ')[0]) for x in au.split(' and '))
+                if ed:
+                    n.update(authorNorm(x.split(', ')[0]) for x in ed.split(' and '))
+                return author in n
+
+            matches = sorted(filter(isAuth, db.works), key=lambda x: x.key())
+            if matches:
+                bib = htmlBibliography(matches)
+            else:
+                bib = "No entries with author: " + author
+            return flask.render_template('bibliography.html', search="au:"+author, article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
+
+
+        @flaskApp.route('/new')
+        def listFilesNew():
+            db = Database(dataDir=args.data_dir)
+            def key(x):
+                d = x.importDate
+                return (-d.year, 
+                        -d.month, 
+                        -d.day, 
+                        -d.hour, 
+                        -d.minute, 
+                        -d.second, 
+                        x.key())
+            bib = htmlBibliography(sorted(db.works, key=key))
+            return flask.render_template('bibliography.html', article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
 
         try:
             flaskApp.run(port=args.port)

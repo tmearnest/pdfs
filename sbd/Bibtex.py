@@ -18,7 +18,7 @@ _regularizeWsRe = re.compile(r"\s+")
 def _regularizeWs(x):
     return _regularizeWsRe.sub(' ', x)
 
-def _unicodeNorm(x):
+def unicodeNorm(x):
     return unicodedata.normalize("NFKD", x).encode('ascii', 'ignore').decode()
 
 def _unicode2tex_sep(xs):
@@ -89,9 +89,9 @@ def makeBibtex(key, btexType, btexDict):
 
 def makeCiteKey(meta):
     if 'author' in meta:
-        firstAuth = _unicodeNorm(meta['author'][0]['family'].split(' ')[0])
+        firstAuth = unicodeNorm(meta['author'][0]['family'].split(' ')[0])
     elif 'editor' in meta:
-        firstAuth = _unicodeNorm(meta['editor'][0]['family'].split(' ')[0])
+        firstAuth = unicodeNorm(meta['editor'][0]['family'].split(' ')[0])
     else:
         firstAuth = "Unknown"
 

@@ -116,6 +116,10 @@ class Database:
         with FileLock(self.metaLockFile):
             self.works = [Work.from_db(**d) for d in json.load(open(os.path.join(dataDir, ".metadata.json")))]
 
+        self.tags = set()
+        for w in self.works:
+            self.tags.update(w.tags)
+
     def save(self):
         with FileLock(self.metaLockFile):
             json.dump([x.toDict() for x in self.works], open(os.path.join(self.dataDir, ".metadata.json"), "w"), indent=1, sort_keys=True)
@@ -194,6 +198,7 @@ class Database:
 
         for t in tags:
             entry.tags.append(t)
+        self.tags.update(tags)
 
         self.works.append(entry)
         self.save()
@@ -225,5 +230,6 @@ class Database:
             shutil.copyfile(srcFile, dstFile)
 
         self.works.append(eDst)
+        self.tags.update(eDst.tags)
         self.save()
         return eDst

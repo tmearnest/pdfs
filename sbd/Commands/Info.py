@@ -1,6 +1,7 @@
 import os
 from .Command import Command
 from ..Database import Database
+from collections import Counter
 
 class Info(Command):
     command = 'info'
@@ -20,26 +21,20 @@ class Info(Command):
             if os.path.isfile(f):
                 dirSize += os.path.getsize(f)
 
-        tagHist = dict()
-        def binTag(x):
-            try:
-                tagHist[x] += 1
-            except KeyError:
-                tagHist[x] = 1
+        tagCount = Counter()
 
         for e in db.works:
-            for t in e.tags:
-                binTag(t)
+            tagCount.update(e.tags)
 
         fields = [("Data path", dataPath),
                   ("Size",      "{:.3f} MB".format(dirSize/(1<<20))),
                   ("Works",      str(nworks))]
 
 
-        w = max(len(x) for x in tagHist)
+        w = max(len(x) for x in tagCount)
         w = max(1+w, 12)
 
         print('\n'.join("{:<12s}{}".format(*x) for x in fields))
         print("Tags:")
-        for t,c in sorted(tagHist.items(), key=lambda x: -x[1]):
+        for t,c in sorted(tagCount.items(), key=lambda x: -x[1]):
             print("{t:>{w}} {c:>3d}".format(t=t,c=c,w=w))

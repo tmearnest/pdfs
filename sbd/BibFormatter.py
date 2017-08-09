@@ -3,30 +3,39 @@ from .Bibtex import bibtexFields
 
 _nameSepRe = re.compile(r"[., ]+")
 
-def _limitAuthors(btexAuthors):
-    people = []
-    for person in  btexAuthors.split(" and "):
-        names = person.split(',')
-        family = names[0]
-        given = ','.join(names[1:])
-        people.append( family + ' ' + ''.join(x[0].upper() for x in _nameSepRe.split(given) if x))
-    if len(people) > 4:
-        people = people[:3] + ["…"] + [people[-1]]
-    if len(people) < 3:
-        s = ' and '.join(people)
-    else:
-        s =  ', '.join(people[:-1]) + ', and ' + people[-1]
-    return s
 
 class FieldDelegate:
     def __init_subclass__(cls):
-        for field in bibtexFields + ['key']:
+        for field in bibtexFields + ['key', 'timestamp']:
             if not hasattr(cls, field):
                 setattr(cls, field, lambda s, field=field: getattr(s.entry,field)() )
 
 class BibFormatter(FieldDelegate):
-    def __init__(self, e):
+    def __init__(self, e, index=None):
         self.entry = e
+        if index:
+            index = str(index)
+        self._index = index
+
+    def person_fmt(self, s):
+        return s
+
+    def _limitAuthors(self, btexAuthors):
+        people = []
+        for person in  btexAuthors.split(" and "):
+            names = person.split(',')
+            family = names[0]
+            given = ','.join(names[1:])
+            name  = family + ' ' + ''.join(x[0].upper() for x in _nameSepRe.split(given) if x)
+            people.append(self.person_fmt(name))
+
+        if len(people) > 4:
+            people = people[:3] + ["…"] + [people[-1]]
+        if len(people) < 3:
+            s = ' and '.join(people)
+        else:
+            s =  ', '.join(people[:-1]) + ', and ' + people[-1]
+        return s
 
     def key_fmt(self):
         s = "[" 
@@ -65,13 +74,6 @@ class BibFormatter(FieldDelegate):
         seps =  ['. '] + [', ']*n + ['. ', '']
         s =  ''.join(''.join(x) for x in zip(fields, seps))
 
-        f = self.tags_fmt()
-        if f:
-            s += ' '+f
-        f = self.attachments_fmt()
-        if f:
-            s += ' ' + f
-
         return s
 
     def tags_fmt(self):
@@ -88,13 +90,12 @@ class BibFormatter(FieldDelegate):
     def tag(self, t):
         return t
 
-    def fmt(self,index=None):
-        if index:
-            index = str(index)
-        self._index = index
+    def fmt(self):
         k = self.key_fmt()
         b = self.bib_fmt()
-        return ' '.join(x for x in [k,b] if x)
+        t = self.tags_fmt()
+        a = self.attachments_fmt()
+        return ' '.join(x for x in [k,b,t,a] if x)
 
     def index(self):
         return self._index
@@ -107,7 +108,7 @@ class BibFormatter(FieldDelegate):
             else:
                 s = ', ed.'
 
-            return _limitAuthors(e) + s
+            return self._limitAuthors(e) + s
 
     def pages(self):
         p = self.entry.editor()
@@ -119,7 +120,7 @@ class BibFormatter(FieldDelegate):
     def author(self):
         a = self.entry.author()
         if a:
-            return _limitAuthors(a)
+            return self._limitAuthors(a)
 
     def volume(self):
         v = self.entry.volume()

@@ -2,13 +2,24 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>sdb: {{article_dir}}</title>
+       {% if search %}
+       <title>sdb: {{article_dir}}/{{search}}</title>
+       {% else %}
+       <title>sdb: {{article_dir}}</title>
+       {% endif %}
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}"/>
     <link rel="shortcut icon"  href="{{url_for('static', filename='favicon.ico')}}"/>
   </head>
   <body>
     <div class="sbd">
-       <h1>Articles under “{{article_dir}}”</h1>
+       {% if search %}
+       <h1>Bibliography for “{{search}}” in “{{article_dir}}”</h1>
+       {% else %}
+       <h1>Bibliography for “{{article_dir}}”</h1>
+       {% endif %}
+       {% if tags %}
+       <div class="tags"><span class="tags">Tags</span> {{tags|safe}}</div>
+       {% endif %}
        <dl>
            {{body|safe}}
        </dl>
