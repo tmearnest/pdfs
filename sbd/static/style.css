@@ -10,6 +10,10 @@ dt.sbd {
     font-weight: 300;
 }
 
+dd.sbd {
+    margin-bottom: 2em;
+}
+
 h1 {
     text-align: center;
 }

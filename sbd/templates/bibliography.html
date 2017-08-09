@@ -20,8 +20,37 @@
        {% if tags %}
        <div class="tags"><span class="tags">Tags</span> {{tags|safe}}</div>
        {% endif %}
+       {% if entries %}
        <dl>
-           {{body|safe}}
+           {% for e in entries %}
+           <dt class="sbd">{{e.key}}</dt>
+           <dd class="sbd">
+               {{e.reference|safe}}<br/>
+               <span class="label">Added:</span>
+               <span class="timestamp">{{e.importDate}}</span><br/>
+               {% if e.tags %}
+               <span class="label">Tags: </span>
+               {% for t in e.tags %}
+               <a class="tags" href="/tag/{{t}}">{{t}}</a>{% if not loop.last %},{% endif %}
+               {% endfor %}
+               <br/>
+               {% endif %}
+               {% if e.attachments %}
+               <span class="label">Attachments: </span>
+               {% for a in e.attachments %}
+               <a class="attachment" href="/attachment/{{a.file}}">{{a.name}}</a>{% if not loop.last %},{% endif %}
+               {% endfor %}
+               <br/>
+               {% endif %}
+               <a class="pdf" target="_blank" href="/{{e.key}}.pdf"></a>
+               <a class="bib" target="_blank" href="/{{e.key}}.bib"></a>
+               <a class="meta" target="_blank" href="/metadata/{{e.key}}"></a>
+               <br/>
+           </dd>
+           {% endfor %}
+       {% else %}
+            Nothing found
+       {% endif %}
        </dl>
     </div>
   </body>

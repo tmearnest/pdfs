@@ -12,7 +12,7 @@ from pygments.formatters import HtmlFormatter
 
 from .Command import Command
 from ..Database import Database
-from ..HTMLBib import htmlBibliography, authorNorm
+from ..HTMLBib import bibContext, authorNorm
 from ..Exceptions import UserException
 
 
@@ -85,17 +85,20 @@ class WWW(Command):
         def listFilesByTag(tag):
             db = Database(dataDir=args.data_dir)
             matches = sorted(filter(lambda x: tag in x.tags, db.works), key=lambda x: x.key())
-            if matches:
-                bib = htmlBibliography(matches)
-            else:
-                bib = "No entries with tag: " + tag
-            return flask.render_template('bibliography.html', search="tag:"+tag, article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
-            
+
+            ctx = dict(entries=bibContext(matches),
+                       article_dir=os.path.basename(os.path.dirname(db.dataDir)), 
+                       search="tag:"+tag,
+                       tags=mkTagList(db))
+            return flask.render_template('bibliography.html', **ctx)
+
         @flaskApp.route('/')
         def listFiles():
             db = Database(dataDir=args.data_dir)
-            bib = htmlBibliography(sorted(db.works, key=lambda x: x.key()))
-            return flask.render_template('bibliography.html', article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
+            ctx = dict(entries=bibContext(sorted(db.works, key=lambda x: x.key())),
+                       article_dir=os.path.basename(os.path.dirname(db.dataDir)), 
+                       tags=mkTagList(db))
+            return flask.render_template('bibliography.html', **ctx)
 
         @flaskApp.route('/author/<author>')
         def listFilesByAuthor(author):
@@ -110,11 +113,12 @@ class WWW(Command):
                 return author in n
 
             matches = sorted(filter(isAuth, db.works), key=lambda x: x.key())
-            if matches:
-                bib = htmlBibliography(matches)
-            else:
-                bib = "No entries with author: " + author
-            return flask.render_template('bibliography.html', search="au:"+author, article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
+
+            ctx = dict(entries=bibContext(matches),
+                       article_dir=os.path.basename(os.path.dirname(db.dataDir)), 
+                       search="au:"+author,
+                       tags=mkTagList(db))
+            return flask.render_template('bibliography.html', **ctx)
 
 
         @flaskApp.route('/new')
@@ -129,8 +133,10 @@ class WWW(Command):
                         -d.minute, 
                         -d.second, 
                         x.key())
-            bib = htmlBibliography(sorted(db.works, key=key))
-            return flask.render_template('bibliography.html', article_dir=os.path.basename(os.path.dirname(db.dataDir)), body=bib, tags=mkTagList(db))
+            ctx = dict(entries=htmlBibliography(sorted(db.works, key=key)),
+                       article_dir=os.path.basename(os.path.dirname(db.dataDir)), 
+                       tags=mkTagList(db))
+            return flask.render_template('bibliography.html', **ctx)
 
         try:
             flaskApp.run(port=args.port)
