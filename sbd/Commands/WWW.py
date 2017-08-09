@@ -6,10 +6,6 @@ import os
 import flask
 import jinja2
 
-from pygments import highlight
-from pygments.lexers.data import JsonLexer
-from pygments.formatters import HtmlFormatter
-
 from .Command import Command
 from ..Database import Database
 from ..HTMLBib import bibContext, authorNorm
@@ -70,16 +66,6 @@ class WWW(Command):
             resp = flask.make_response(e.bibtex)
             resp.content_type = 'text/plain'
             return resp
-
-        @flaskApp.route("/metadata/<key>")
-        def getMeta(key):
-            db = Database(dataDir=args.data_dir)
-            try:
-                e = next(filter(lambda x: x.key() == key, db.works))
-            except StopIteration:
-                raise KeyError
-            html = highlight(json.dumps(e.meta, indent=4, sort_keys=True),JsonLexer(), HtmlFormatter(noclasses=True))
-            return flask.render_template('blank.html', title="sdb: {} metadata".format(key), body=html)
 
         @flaskApp.route('/tag/<tag>')
         def listFilesByTag(tag):

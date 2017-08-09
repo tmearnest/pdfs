@@ -13,6 +13,6 @@ setup(name='sbd',
       license='MIT License',
       entry_points = {"console_scripts": ['sbd = sbd.EntryPoint:main']},
       install_requires = ["flask", "inotify", "jinja2", "pdfminer.six",
-                          "prompt_toolkit", "pygments",
+                          "prompt_toolkit", 
                           "python-dateutil", "requests", "termcolor",
                           "unidecode"])
