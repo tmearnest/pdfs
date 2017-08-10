@@ -5,6 +5,10 @@ def authorNorm(x):
     return unicodeNorm(x).lower().replace(' ', '_')
 
 class CtxBib(BibFormatter):
+    def title(self):
+        t = super().title()
+        return '<span class="title">' + t + '</span>'
+
     def year(self):
         y = super().year()
         return "<b>" + y + "</b>"

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
        {% if search %}
@@ -18,39 +18,41 @@
        <h1>Bibliography for “{{article_dir}}”</h1>
        {% endif %}
        {% if tags %}
-       <div class="tags"><span class="tags">Tags</span> {{tags|safe}}</div>
+       <div class="tagBar">{{tags|safe}}</div>
        {% endif %}
        {% if entries %}
-       <dl>
-           {% for e in entries %}
-           <dt class="sbd">{{e.key}}</dt>
-           <dd class="sbd">
-               {{e.reference|safe}}<br/>
-               <span class="label">Added:</span>
-               <span class="timestamp">{{e.importDate}}</span><br/>
-               {% if e.tags %}
-               <span class="label">Tags: </span>
+       {% for e in entries %}
+       <div class='entry'>
+           <div class='key'>{{e.key}}</div>
+           <div class='timestamp'>{{e.importDate}}</div>
+           <div class='reference'>
+               {{e.reference|safe}}
+           </div>
+           {% if e.attachments %}
+           <div class='attLabel'> </div>
+           <div class='attachments'>
+              {% for a in e.attachments %}
+              <a class="attachment" href="/attachment/{{a.file}}">{{a.name}}</a>{% if not loop.last %},{% endif %}
+              {% endfor %}
+           </div>
+           {% endif %}
+           {% if e.tags %}
+           <div class='tagLabel'> </div>
+           <div class='tags'> 
                {% for t in e.tags %}
-               <a class="tags" href="/tag/{{t}}">{{t}}</a>{% if not loop.last %},{% endif %}
+               <a class="tags" href="/tag/{{t}}">{{t}}</a>
                {% endfor %}
-               <br/>
-               {% endif %}
-               {% if e.attachments %}
-               <span class="label">Attachments: </span>
-               {% for a in e.attachments %}
-               <a class="attachment" href="/attachment/{{a.file}}">{{a.name}}</a>{% if not loop.last %},{% endif %}
-               {% endfor %}
-               <br/>
-               {% endif %}
+           </div>
+           {% endif %}
+           <div class='links'>
                <a class="pdf" target="_blank" href="/{{e.key}}.pdf"></a>
                <a class="bib" target="_blank" href="/{{e.key}}.bib"></a>
-               <br/>
-           </dd>
-           {% endfor %}
+           </div>
+       </div>
+       {% endfor %}
        {% else %}
             Nothing found
        {% endif %}
-       </dl>
     </div>
   </body>
 </html>

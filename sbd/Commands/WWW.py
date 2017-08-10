@@ -29,6 +29,8 @@ class WWW(Command):
 
         Database(dataDir=args.data_dir)
         flaskApp = flask.Flask("sbd")
+        flaskApp.jinja_env.trim_blocks = True
+        flaskApp.jinja_env.lstrip_blocks = True
         flaskApp.jinja_loader=jinja2.PackageLoader("sbd")
 
         @flaskApp.route('/<key>.pdf')
