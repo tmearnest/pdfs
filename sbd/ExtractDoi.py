@@ -15,7 +15,7 @@ def _chopPeriod(x):
     return x
 
 def extractDois(fname):
-    pdfData = getPdfTxt(fname)
+    pdfData = '\n'.join(getPdfTxt(fname))
     dois = [_chopPeriod(x.lower()) for x in _doiRegexStr.findall(pdfData)]
     seen = set()
     return [x for x in dois if not (x in seen or seen.add(x))]

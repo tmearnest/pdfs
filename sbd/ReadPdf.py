@@ -10,10 +10,10 @@ from unidecode import unidecode
 from .Cache import cachedRequest
 
 def getPdfTxt(fname):
-    return _getPdfTxt(fname, cache_key=md5sum(fname))
+    return _getPdf(fname, cache_key=md5sum(fname))
 
 @cachedRequest("PDF")
-def _getPdfTxt(fname, cache_key=None):
+def _getPdf(fname, cache_key=None):
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
     codec = 'utf-8'
@@ -28,13 +28,19 @@ def _getPdfTxt(fname, cache_key=None):
 
     for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
         interpreter.process_page(page)
+        print('\f', file=retstr)
 
     text = retstr.getvalue()
 
     fp.close()
     device.close()
     retstr.close()
-    return unidecode(text)
+    
+    return [unidecode(x) for x in text.split("\f") if x.strip()]
 
 def md5sum(fname):
     return hashlib.md5(open(fname,"rb").read()).hexdigest()
+
+
+
+
