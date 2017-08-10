@@ -1,6 +1,4 @@
 from .Command import Command
-from ..Database import Database
-from ..Logging import log
 
 class Bibtex(Command):
     command = 'bibtex'
@@ -11,6 +9,9 @@ class Bibtex(Command):
         subparser.add_argument('--all', '-a', action='store_true')
 
     def run(self, args):
+        from ..Database import Database
+        from ..Logging import log
+
         db = Database(dataDir=args.data_dir)
 
         btexs = []

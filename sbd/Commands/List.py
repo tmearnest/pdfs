@@ -1,7 +1,4 @@
-import re
 from .Command import Command
-from ..Database import Database
-from ..AnsiBib import printBibliography
 
 class List(Command):
     command = 'list'
@@ -15,6 +12,10 @@ class List(Command):
         subparser.add_argument("--key", "-k", metavar='REGEX', type=str, default=None)
 
     def run(self, args):
+        import re
+        from ..Database import Database
+        from ..AnsiBib import printBibliography
+
         db = Database(dataDir=args.data_dir)
 
         gen = iter(db.works)

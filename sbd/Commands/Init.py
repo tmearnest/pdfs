@@ -1,5 +1,4 @@
 from .Command import Command
-from ..Database import Database
 
 class Init(Command):
     command = 'init'
@@ -9,4 +8,5 @@ class Init(Command):
         subparser.add_argument("--force", help="Overwrite existing document repository", action='store_true')
 
     def run(self, args):
+        from ..Database import Database
         Database.init(dataDir=args.data_dir, clobber=args.force)

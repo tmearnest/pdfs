@@ -1,7 +1,4 @@
-import os
 from .Command import Command
-from ..Database import Database
-from collections import Counter
 
 class Info(Command):
     command = 'info'
@@ -11,6 +8,10 @@ class Info(Command):
         pass
 
     def run(self, args):
+        import os
+        from ..Database import Database
+        from collections import Counter
+
         db = Database(dataDir=args.data_dir)
         nworks = len(db.works)
         dataPath = db.dataDir

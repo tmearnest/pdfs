@@ -1,13 +1,7 @@
-import tempfile
-import re
 import os
-from .Command import Command
-from ..Logging import log
-from ..Database import Database
-from ..Exceptions import UserException
-from ..Bibtex import bibtexTypes
+import tempfile
 
-_keyRe = re.compile(r"\s*@\s*(?:"+'|'.join(bibtexTypes)+r")\s*\{\s*([^\s,]+)\s*,")
+from .Command import Command
 
 class Edit(Command):
     command = 'edit'
@@ -23,6 +17,14 @@ class Edit(Command):
         subparser.add_argument('--delete-entry',  action="store_true")
 
     def run(self, args):
+        import re
+        from ..Logging import log
+        from ..Database import Database
+        from ..Exceptions import UserException
+        from ..Bibtex import bibtexTypes
+
+        _keyRe = re.compile(r"\s*@\s*(?:"+'|'.join(bibtexTypes)+r")\s*\{\s*([^\s,]+)\s*,")
+
         db = Database(dataDir=args.data_dir)
 
         try:

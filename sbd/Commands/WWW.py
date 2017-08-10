@@ -1,16 +1,4 @@
-import json
-import logging
-import mimetypes
-import os
-
-import flask
-import jinja2
-
 from .Command import Command
-from ..Database import Database
-from ..HTMLBib import bibContext, authorNorm
-from ..Exceptions import UserException
-
 
 def mkTagList(db):
     if db.tags:
@@ -24,6 +12,17 @@ class WWW(Command):
         subparser.add_argument("--port","-P", help="Port number to listen on", type=int, default=5000)
 
     def run(self, args):
+        import logging
+        import mimetypes
+        import os
+
+        import flask
+        import jinja2
+
+        from ..Database import Database
+        from ..HTMLBib import bibContext, authorNorm
+        from ..Exceptions import UserException
+                
         if not args.debug:
             logging.getLogger('werkzeug').setLevel(logging.ERROR)
 

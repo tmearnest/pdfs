@@ -1,7 +1,4 @@
-import re
 from .Command import Command
-from ..Database import Database
-from ..Logging import log
 
 class Aux2Bib(Command):
     command = 'aux2bib'
@@ -12,6 +9,10 @@ class Aux2Bib(Command):
         subparser.add_argument('bib', metavar='BIB_FILE', type=str)
 
     def run(self, args):
+        import re
+        from ..Database import Database
+        from ..Logging import log
+
         db = Database(dataDir=args.data_dir)
         auxKeys = set(re.findall(r"\\(?:bibcite|citation)\{([^}]+)\}", open(args.aux, "r").read()))
         auxKeys = sorted(x.strip() for x in auxKeys)

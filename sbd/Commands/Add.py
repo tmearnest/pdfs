@@ -1,8 +1,4 @@
 from .Command import Command
-from ..Database import Database
-from ..BaseWork import Work
-from ..ExtractDoi import entryFromUser, entryFromPdf
-from ..AnsiBib import printWork
 
 class Add(Command):
     command = 'add'
@@ -15,6 +11,11 @@ class Add(Command):
         subparser.add_argument("--tags", "-t", help="Descriptive tags", nargs="+", type=str, metavar="TAG", default=[])
 
     def run(self, args):
+        from ..Database import Database
+        from ..BaseWork import Work
+        from ..ExtractDoi import entryFromUser, entryFromPdf
+        from ..AnsiBib import printWork
+
         db = Database(dataDir=args.data_dir)
         if args.doi:
             entry = Work.from_doi(args.doi)
