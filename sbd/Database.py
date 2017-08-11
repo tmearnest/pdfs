@@ -7,18 +7,12 @@ import time
 import hashlib
 import unicodedata
 
-from .Logging import log
+from .TermOutput import msg
 from .Exceptions import WorkExistsException, UserException
 from .BaseWork import Work
 from .WorkTypes import *
-
-
-def md5sum(fname):
-    try:
-        return hashlib.md5(open(fname,"rb").read()).hexdigest()
-    except FileNotFoundError:
-        raise UserException("File {} not found".format(fname))
-
+from .TextSearch import TextSearch
+from .ReadPdf import getPdfTxt, md5sum
 
 def _nameDbFile(entry, fname, idx):
     author = entry.author() or entry.editor()
@@ -48,7 +42,7 @@ class FileLock:
     def __enter__(self):
         if os.path.exists(self.lockFname):
             otherPid = int(open(self.lockFname).read())
-            log.warning("Waiting for lock on document repository (pid %d has it)", otherPid)
+            msg.warning("Waiting for lock on document repository (pid %d has it)", otherPid)
             while os.path.exists(self.lockFname):
                 time.sleep(0.2)
         with open(self.lockFname, "w") as f:
@@ -67,17 +61,12 @@ class Database:
             if clobber:
                 shutil.rmtree(dataDir)
                 os.mkdir(dataDir)
-                log.warning("Clobbered %s", dataDir)
+                msg.warning("Clobbered %s", dataDir)
             else:
                 raise FileExistsError("Document repository already exists at "+dataDir)
         json.dump([], open(os.path.join(dataDir, ".metadata.json"), "w"))
+        TextSearch.init(dataDir)
         return cls(dataDir=dataDir)
-
-    def _md5s(self):
-        s = set()
-        for w in self.works:
-            s.update([(w.key(), md5) for md5 in w.md5s])
-        return s
             
     def find(self, *, pdfFname=None, key=None):
         if pdfFname:
@@ -115,6 +104,8 @@ class Database:
         self.metaLockFile = os.path.join(dataDir, ".metadata.lck")
         with FileLock(self.metaLockFile):
             self.works = [Work.from_db(**d) for d in json.load(open(os.path.join(dataDir, ".metadata.json")))]
+
+        self.textSearch = TextSearch(self.dataDir)
 
         self.tags = set()
         for w in self.works:
@@ -164,7 +155,6 @@ class Database:
     def add(self, entry, pdfFname, suppFnames, tags):
         # Check for existing pdf
         pdfMd5 = md5sum(pdfFname)
-        allMd5s = self._md5s()
         otherWork = self.find(pdfFname=pdfFname)
         if otherWork:
             raise WorkExistsException("{} already exists in database with key {}".format(os.path.basename(pdfFname), otherWork.key()))
@@ -176,6 +166,8 @@ class Database:
         entry.md5s.append(pdfMd5)
         entry.fileLabels.append('PDF')
 
+        self.textSearch.add(pdfMd5, getPdfTxt(pdfFname))
+
         for i,fn in enumerate(suppFnames):
             md5 = md5sum(fn)
             newSiFname =  _nameDbFile(entry, fn, i+1)
@@ -185,7 +177,7 @@ class Database:
             entry.fileLabels.append(os.path.basename(fn))
 
         # ensure unique cite key 
-        citeKeys = {x[0] for x in allMd5s}
+        citeKeys = {x.key() for x in self.works}
         oldKey = entry.key()
         newKey = oldKey
         suffix = 'a'
@@ -213,9 +205,12 @@ class Database:
         return os.path.join(self.dataDir, fname)
 
     def delete(self, key):
-        newWorks = [w for w in self.works if w.key() != key]
-        if len(newWorks) != len(self.works):
+        oldEntry = self.find(key=key)
+        newWorks = [w for w in self.works if w is not oldEntry]
+        if len(newWorks) == len(self.works):
             raise UserException("Key {} not in repository".format(key))
+
+        self.textSearch.delete(oldEntry.md5s[0])
         
         self.works = newWorks
         self.save()
@@ -229,7 +224,16 @@ class Database:
             dstFile = self.getFile(eDst, lbl)
             shutil.copyfile(srcFile, dstFile)
 
+        self.textSearch.add(eSrc.md5[0], self.getFile(eDest, "PDF"))
+
         self.works.append(eDst)
         self.tags.update(eDst.tags)
         self.save()
         return eDst
+
+    def search(self, query, formatter=None):
+        results = []
+        for md5, score, frags in self.textSearch.search(query, formatter):
+            entry = next(filter(lambda x: x.md5s[0] == md5, self.works))
+            results.append( dict(entry=entry, score=score, frags=frags) )
+        return results

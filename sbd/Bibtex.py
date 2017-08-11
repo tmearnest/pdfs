@@ -106,7 +106,7 @@ def makeCiteKey(meta):
     year = str(meta['issued']['date-parts'][0][0])
     try:
         title = meta['title'][-1]
-        suffix = list(map(lambda x: x[0].lower(), title.split(' ')))
+        suffix = list(filter(lambda x:x.isalnum(), map(lambda x: x[0].lower(), filter(lambda x:x, title.split(' ')))))
         suffix = ''.join(suffix[:min(len(suffix),3)])
     except IndexError:
         suffix = 'XXX'

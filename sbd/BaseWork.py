@@ -1,7 +1,7 @@
 import datetime
 import dateutil.parser
 import dateutil.tz
-from .Logging import log
+from .TermOutput import msg
 from .Crossref import crossrefLookup
 from .Bibtex import bibtexFields, makeBibtex, makeCiteKey
 
@@ -123,7 +123,7 @@ class Work(metaclass=TypeMapMeta):
             if d:
                 btexDict = _mergeDicts(btexDict, d)
             else:
-                log.warning("%s/%s (doi:%s) missing field: %s", self.key(), self.btexType, self.meta['DOI'], field)
+                msg.warning("%s/%s (doi:%s) missing field: %s", self.key(), self.btexType, self.meta['DOI'], field)
 
         for field in self._optFields:
             d = getattr(self, "_dict_"+field)()

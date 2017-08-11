@@ -3,7 +3,7 @@ import sys
 import argparse
 from .Exceptions import AbortException, UserException, WorkExistsException
 from .Database import Database
-from .Logging import log, loggingSetup
+from .TermOutput import msg
 from .Commands import *
 from .Commands.Command import Registry
 from .Cache import RequestCache
@@ -27,9 +27,14 @@ def main():
 
     args = parser.parse_args()
     if args.debug:
-        loggingSetup("DEBUG")
+        msg.setup(level="DEBUG")
+        try:
+            from ipdb import launch_ipdb_on_exception
+        except ModuleNotFoundError:
+            from contextlib import contextmanager
+            launch_ipdb_on_exception = contextmanager(lambda : None)
     else:
-        loggingSetup(args.logging_level)
+        msg.setup(level=args.logging_level)
 
     ddir = Database.getDataDir(dataDir=args.data_dir)
     if ddir:
@@ -37,31 +42,23 @@ def main():
 
     try:
         if hasattr(args, "func"):
-            args.func(args)
+            if args.debug:
+                with launch_ipdb_on_exception():
+                    args.func(args)
+            else:
+                args.func(args)
         else:
             parser.print_usage()
     except UserException as e:
-        log.error("Error: %s", e)
-        if args.debug:
-            raise
-        else:
-            sys.exit(1)
+        msg.error("Error: %s", e)
+        sys.exit(1)
     except AbortException:
-        log.error("Aborted")
-        if args.debug:
-            raise
-        else:
-            sys.exit(1)
+        msg.error("Aborted")
+        sys.exit(1)
     except WorkExistsException as e:
-        log.error(str(e))
-        if args.debug:
-            raise
-        else:
-            sys.exit(1)
+        msg.error(str(e))
+        sys.exit(1)
     except:
         t,v,_ = sys.exc_info()
-        log.critical("Unhandled exception: %s(%s)", t.__name__, v)
-        if args.debug:
-            raise
-        else:
-            sys.exit(1)
+        msg.critical("Unhandled exception: %s(%s)", t.__name__, v)
+        sys.exit(1)

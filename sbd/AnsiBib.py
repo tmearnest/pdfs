@@ -1,78 +1,41 @@
-import termcolor as tc
-import shutil
-import re
 from .BibFormatter import BibFormatter
+from .TermOutput import msg, wrapWithColor, fg, bg, attr, stylize
 
-_ansiRe = re.compile(r"((?:\x1b\[[0-9;]+?m)+)")
-_wsRe = re.compile(r"(\s+)")
-
-def _clr(s, c, attrs=None):
-    if s:
-        return  tc.colored(s, c, attrs=attrs)
+def _co(x, c):
+    if x:
+        return stylize(x,c)
 
 class AnsiBib(BibFormatter):
     def tag(self, t):
-        return tc.colored(t, 'red', attrs=['bold'])
+        return _co(t, fg('red') + attr('bold'))
 
     def attachment(self, a):
-        return tc.colored(a, 'cyan')
+        return _co(a, fg('cyan'))
 
     def key(self):
-        return _clr(super().key(), 'green')
+        return _co(super().key(), fg('green'))
 
     def index(self):
-        return _clr(super().index(), 'white', attrs=['bold'])
+        return _co(super().index(), fg('white') + attr('bold'))
 
     def year(self):
-        return _clr(super().year(), 'magenta')
+        return _co(super().year(), fg('magenta'))
 
     def booktitle(self):
-        return _clr(super().booktitle(), 'cyan', attrs=['bold'])
+        return _co(super().booktitle(), fg('cyan') + attr('bold'))
 
     def volume(self):
-        return _clr(super().volume(), 'yellow')
+        return _co(super().volume(), fg('yellow'))
 
     def journal(self):
-        return _clr(super().journal(), 'cyan', attrs=['bold'])
+        return _co(super().journal(), fg('cyan') + attr('bold'))
 
     def doi(self):
-        return _clr("doi:"+super().doi(), 'blue')
+        return _co("doi:"+super().doi(), fg('blue'))
 
     def fmt(self, *args, **kwargs):
         f = super().fmt(*args, **kwargs)
         return wrapWithColor(f)
-
-
-def wrapWithColor(s, width=None, firstIndent=0,indent=3):
-    if not width:
-        width = min(120, shutil.get_terminal_size()[0])
-
-    splt =  sum(([y for y in _wsRe.split(x) if len(y)>0] for x in _ansiRe.split(s)), [])
-
-    lines = []
-    line = " "*firstIndent
-    lineSize = firstIndent
-    lastAnsi = '\x1b[0m'
-
-    for frag in splt:
-        if frag[0] == '\x1b':
-            fragSize = 0
-            lastAnsi = frag
-        else:
-            fragSize = len(frag)
-
-        if fragSize + lineSize > width:
-            lines.append(line)
-            line = " "*indent + lastAnsi + frag.strip()
-            lineSize = len(frag.strip()) + indent
-        else:
-            line += frag
-            lineSize += fragSize
-
-    if line.strip():
-        lines.append(line)
-
-    return "\n".join(lines) + "\n"
 
 def printBibliography(works):
     for i,w in enumerate(works):

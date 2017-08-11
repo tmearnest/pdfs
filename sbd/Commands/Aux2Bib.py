@@ -11,7 +11,7 @@ class Aux2Bib(Command):
     def run(self, args):
         import re
         from ..Database import Database
-        from ..Logging import log
+        from ..TermOutput import msg
 
         db = Database(dataDir=args.data_dir)
         auxKeys = set(re.findall(r"\\(?:bibcite|citation)\{([^}]+)\}", open(args.aux, "r").read()))
@@ -30,4 +30,4 @@ class Aux2Bib(Command):
                 bib.write('\n'.join(btexs))
 
         if missing:
-            log.warning("Citation keys missed: %s", str(missing))
+            msg.warning("Citation keys missed: %s", str(missing))

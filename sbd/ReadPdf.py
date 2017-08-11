@@ -1,5 +1,6 @@
 import hashlib
 from io import StringIO
+from functools import lru_cache
 
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
@@ -38,9 +39,11 @@ def _getPdf(fname, cache_key=None):
     
     return [unidecode(x) for x in text.split("\f") if x.strip()]
 
+@lru_cache(maxsize=32)
 def md5sum(fname):
-    return hashlib.md5(open(fname,"rb").read()).hexdigest()
-
-
+    try:
+        return hashlib.md5(open(fname,"rb").read()).hexdigest()
+    except FileNotFoundError:
+        raise UserException("File {} not found".format(fname))
 
 

@@ -3,7 +3,7 @@ import inotify.adapters
 from pdfminer.pdfparser import PDFSyntaxError
 from .Command import Command
 from ..Database import Database
-from ..Logging import log
+from ..TermOutput import msg
 from ..ExtractDoi import entryFromUser, entryFromPdf
 from ..Exceptions import WorkExistsException, AbortException
 
@@ -18,14 +18,14 @@ class WatchDir(Command):
         wd = os.path.abspath(args.dir)
         inot = inotify.adapters.Inotify()
         inot.add_watch(wd.encode())
-        log.info("Watching %s for new pdf files...", wd)
+        msg.info("Watching %s for new pdf files...", wd)
 
         try:
             createdFiles = set()
             for event in inot.event_gen():
                 if event is not None:
                     _, type_names, _, filename = event
-                    log.debug("INOTIFY: %s (%s)", filename.encode(), ', '.join(type_names))
+                    msg.debug("INOTIFY: %s (%s)", filename.encode(), ', '.join(type_names))
                     if 'IN_CREATE' in type_names:
                         f = filename.decode("utf-8")
                         if f.lower().endswith(".pdf") and f[0] != '.':
@@ -40,15 +40,15 @@ class WatchDir(Command):
                             if k:
                                 raise WorkExistsException("new file {} exists in database as {}".format(newFile, k))
                             else:
-                                log.info("new file: %s", newFile)
+                                msg.info("new file: %s", newFile)
                                 entry = entryFromPdf(newFilePath) or entryFromUser(newFilePath)
                                 db.add(entry, newFilePath, [], [])
                         except WorkExistsException as e:
-                            log.warning(str(e))
+                            msg.warning(str(e))
                         except AbortException:
-                            log.warning("PDF import aborted")
+                            msg.warning("PDF import aborted")
                         except PDFSyntaxError:
-                            log.warning("file %s seems broken", newFile)
+                            msg.warning("file %s seems broken", newFile)
         except KeyboardInterrupt:
             pass
         finally:

@@ -2,7 +2,7 @@ import re
 import os
 from .Exceptions import AbortException
 from .Prompt import promptOptions, promptString
-from .Logging import log
+from .TermOutput import msg
 from .BaseWork import Work
 from .AnsiBib import printBibliography, printWork
 from .ReadPdf import getPdfTxt
@@ -28,7 +28,9 @@ def entryFromPdf(fname):
         lst = []
         for doi in dois:
             try:
-                lst.append(Work.from_doi(doi))
+                e = Work.from_doi(doi)
+                if e:
+                    lst.append(e)
             except ValueError:
                 pass
             
@@ -69,7 +71,7 @@ def entryFromPdf(fname):
                     printWork(bibChunk[choice-1])
                     return bibChunk[choice-1]
             except ValueError:
-                log.warning("Invalid response")
+                msg.warning("Invalid response")
                 choice = None
     return None
 
@@ -81,7 +83,7 @@ def entryFromUser(fname):
             raise AbortException
         bibData = Work.from_doi(doi)
         if bibData is None:
-            log.warning("Doi not found.")
+            msg.warning("Doi not found.")
             continue
 
         printWork(bibData)

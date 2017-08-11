@@ -15,4 +15,4 @@ setup(name='sbd',
       install_requires = ["flask", "inotify", "jinja2", "pdfminer.six",
                           "prompt_toolkit", 
                           "python-dateutil", "requests", "termcolor",
-                          "unidecode"])
+                          "unidecode", "whoosh"])

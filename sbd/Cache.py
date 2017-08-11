@@ -1,14 +1,7 @@
 import pickle
 import time
-from .Logging import log
-
-class Singleton(type):
-    _instances = {}
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
+from .Bases import Singleton
+from .TermOutput import msg
 
 class RequestCache(metaclass=Singleton):
     def __init__(self, cacheFile=None):
@@ -16,7 +9,7 @@ class RequestCache(metaclass=Singleton):
         try:
             self.cache = pickle.load(open(self.cacheFile,"rb"))
         except FileNotFoundError:
-            log.info("Started new request cache")
+            msg.info("Started new request cache")
             self.cache = {}
 
     def writeCacheFile(self):
@@ -38,7 +31,7 @@ def cachedRequest(name=None):
                 x = args[0]
             
             if x not in cache:
-                log.debug("%s cache miss", name)
+                msg.debug("%s cache miss", name)
                 time.sleep(0.4)
                 cache[x] = fn(*args, **kwargs)
                 rc.writeCacheFile()

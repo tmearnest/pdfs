@@ -18,7 +18,7 @@ class Edit(Command):
 
     def run(self, args):
         import re
-        from ..Logging import log
+        from ..TermOutput import msg
         from ..Database import Database
         from ..Exceptions import UserException
         from ..Bibtex import bibtexTypes
@@ -58,7 +58,7 @@ class Edit(Command):
                 newKey = newKey[0]
 
                 if newKey != oldKey:
-                    log.info("%s → %s", oldKey, newKey)
+                    msg.info("%s → %s", oldKey, newKey)
                     e.set_key(newKey)
 
                 e.bibtex = newBib
