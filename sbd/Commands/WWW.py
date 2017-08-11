@@ -87,6 +87,30 @@ class WWW(Command):
                        tags=mkTagList(db))
             return flask.render_template('bibliography.html', **ctx)
 
+        @flaskApp.route('/search')
+        def searchFiles():
+            query=flask.request.args.get('q', '')
+
+            db = Database(dataDir=args.data_dir)
+
+            entries, searchData = [], []
+            for result in db.search(query, formatter="html"):
+                entries.append(result['entry'])
+                searchData.append(result)
+
+            ctx = bibContext(entries)
+            for c,r in zip(ctx,searchData):
+                c['searchTxt'] = dict(score=r['score'], frags=r['frags'])
+
+            ctx = ctx[::-1]
+
+            ctx = dict(entries=ctx,
+                       article_dir=os.path.basename(os.path.dirname(db.dataDir)), 
+                       search="txt:"+query,
+                       tags=mkTagList(db))
+            return flask.render_template('bibliography.html', **ctx)
+
+
         @flaskApp.route('/author/<author>')
         def listFilesByAuthor(author):
             db = Database(dataDir=args.data_dir)
@@ -130,3 +154,4 @@ class WWW(Command):
         except OSError as err:
             if 'Address already in use' in str(err):
                 raise UserException("Port {} already in use.".format(args.port))
+

@@ -167,3 +167,70 @@ div.attLabel {
 div.attLabel::before {
     content: "Attachments:";
 }
+
+span.match {
+    font-weight: 400;
+    color: hsl(314, 67%, 46%);
+}
+
+div.searchResults {
+    font-size:0.9em;
+    margin-left: 2em;
+    text-align: justify;
+    margin-bottom: 4em;
+    border-radius: 0.5em;
+    border-left: solid 1px #bbb;
+    border-right: solid 1px #bbb;
+}
+    
+
+div.fragment {
+    margin: 0.5em 1em 1em 1em;
+}
+
+span.fragmentPage {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    color: #666;
+    font-size:0.8em;
+}
+
+span.fragmentPage::before {
+    content: "p.";
+}
+
+input.textInput {
+    color: #313131;
+    width: 84%;
+    padding: 0px 0px 0px 5px;
+    border: 1px solid hsla(352, 53%, 90%, 1);
+    background: hsla(0, 0%, 99%, 1);
+    font-family: Lato;
+    height: 30px;
+    line-height: 15px;
+    margin: 2px 6px 16px 0px;
+    outline-width:0;
+}
+
+input.textInput:focus {
+    border: 1px solid hsla(352, 100%, 88%, 1);
+    background: white;
+    outline-width:0;
+}
+
+
+.button {
+    background: #d24b5d;
+    border: 1px solid #86303b;
+    padding: 6px 25px 8px 25px;
+    color: #FFF;
+    border-radius: 3px;
+    text-shadow: 1px 1px 1px #670713;
+    cursor: pointer;
+    font-weight: 900;
+    font-family: Lato;
+}
+
+.button:hover {
+    background: #ec2640;
+}

@@ -12,11 +12,11 @@
   </head>
   <body>
     <div class="sbd">
-       {% if search %}
-       <h1>Bibliography for “{{search}}” in “{{article_dir}}”</h1>
-       {% else %}
-       <h1>Bibliography for “{{article_dir}}”</h1>
-       {% endif %}
+       <h1>{{article_dir}}</h1>
+       <form action="/search" method="get">
+           <input class="textInput" type="text" name="q">
+           <input class="button" type="submit" value="Search">
+       </form>
        {% if tags %}
        <div class="tagBar">{{tags|safe}}</div>
        {% endif %}
@@ -49,6 +49,15 @@
                <a class="bib" target="_blank" href="/{{e.key}}.bib"></a>
            </div>
        </div>
+       {% if e.searchTxt %}
+       <div class='searchResults'>
+       {% for frag in e.searchTxt.frags %}
+       <div class='fragment'>
+           <span class='fragmentPage'>{{frag.page}}</span> {{frag.frag|safe}}
+       </div>
+       {% endfor %}
+       </div>
+       {% endif %}
        {% endfor %}
        {% else %}
             Nothing found
