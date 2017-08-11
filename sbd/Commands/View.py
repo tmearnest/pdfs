@@ -1,7 +1,4 @@
-import subprocess
 from .Command import Command
-from ..Database import Database
-from ..Exceptions import UserException
 
 class View(Command):
     command = 'view'
@@ -12,6 +9,10 @@ class View(Command):
         subparser.add_argument('label', nargs='?', metavar='NAME', default='PDF', type=str)
 
     def run(self, args):
+        import subprocess
+        from ..Database import Database
+        from ..Exceptions import UserException
+
         db = Database(dataDir=args.data_dir)
 
         try:

@@ -43,7 +43,6 @@ def entryFromPdf(fname):
     showMsg = True
     for chunkId, bibChunk in enumerate(chunker()):
         if len(bibChunk) == 1 and chunkId == 0:
-            printWork(bibChunk[0])
             return bibChunk[0]
         if showMsg:
             print("Found {} putative DOIs in {}:\n".format(len(dois), fname) )
@@ -68,7 +67,6 @@ def entryFromPdf(fname):
                     raise ValueError
                 else:
                     print()
-                    printWork(bibChunk[choice-1])
                     return bibChunk[choice-1]
             except ValueError:
                 msg.warning("Invalid response")

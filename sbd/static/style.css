@@ -243,3 +243,13 @@ div.head {
 .head > a:hover {
     text-decoration: none;
 }
+
+span.searchSep {
+    padding-left: 1em;
+    padding-right: 1em;
+    color: #999;
+}
+
+span.searchSep::before {
+    content: "…";
+}

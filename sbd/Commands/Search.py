@@ -1,6 +1,4 @@
 from .Command import Command
-from ..AnsiBib import printWork
-from ..TermOutput import msg, wrapWithColor, fg, bg, attr, stylize, printRule
 
 class List(Command):
     command = 'search'
@@ -10,9 +8,10 @@ class List(Command):
         subparser.add_argument("query", nargs="+", type=str)
 
     def run(self, args):
+        from ..AnsiBib import printWork
+        from ..TermOutput import msg, wrapWithColor, fg, bg, attr, stylize, printRule
         import re
         from ..Database import Database
-        from ..AnsiBib import printBibliography
 
         db = Database(dataDir=args.data_dir)
 

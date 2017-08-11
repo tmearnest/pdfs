@@ -19,8 +19,8 @@ class Add(Command):
         db = Database(dataDir=args.data_dir)
         if args.doi:
             entry = Work.from_doi(args.doi)
-            printWork(entry)
         else:
             entry = entryFromPdf(args.file) or entryFromUser(args.file)
 
         db.add(entry, args.file, args.supplementary, args.tags)
+        printWork(entry)

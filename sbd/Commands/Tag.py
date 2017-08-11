@@ -1,6 +1,4 @@
 from .Command import Command
-from ..Database import Database
-from ..Exceptions import UserException
 
 class Tag(Command):
     command = 'tag'
@@ -12,6 +10,9 @@ class Tag(Command):
         subparser.add_argument('--remove', '-r', metavar='TAG', nargs='+', type=str, default=[])
 
     def run(self, args):
+        from ..Database import Database
+        from ..Exceptions import UserException
+
         db = Database(dataDir=args.data_dir)
         try:
             e = next(x for x in db.works if x.key() == args.key)

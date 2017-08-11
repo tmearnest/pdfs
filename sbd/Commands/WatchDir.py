@@ -1,11 +1,4 @@
-import os.path
-import inotify.adapters
-from pdfminer.pdfparser import PDFSyntaxError
 from .Command import Command
-from ..Database import Database
-from ..TermOutput import msg
-from ..ExtractDoi import entryFromUser, entryFromPdf
-from ..Exceptions import WorkExistsException, AbortException
 
 class WatchDir(Command):
     command = 'watch'
@@ -15,6 +8,15 @@ class WatchDir(Command):
         subparser.add_argument('dir', metavar='DIRECTORY', type=str)
 
     def run(self, args):
+        import os.path
+        import inotify.adapters
+        from pdfminer.pdfparser import PDFSyntaxError
+        from ..Database import Database
+        from ..TermOutput import msg
+        from ..ExtractDoi import entryFromUser, entryFromPdf
+        from ..Exceptions import WorkExistsException, AbortException
+        from ..AnsiBib import printWork
+
         wd = os.path.abspath(args.dir)
         inot = inotify.adapters.Inotify()
         inot.add_watch(wd.encode())
@@ -25,7 +27,7 @@ class WatchDir(Command):
             for event in inot.event_gen():
                 if event is not None:
                     _, type_names, _, filename = event
-                    msg.debug("INOTIFY: %s (%s)", filename.encode(), ', '.join(type_names))
+                    msg.debug("INOTIFY: %s (%s)", filename.decode(), ', '.join(type_names))
                     if 'IN_CREATE' in type_names:
                         f = filename.decode("utf-8")
                         if f.lower().endswith(".pdf") and f[0] != '.':
@@ -36,13 +38,14 @@ class WatchDir(Command):
                             newFile = filename.decode("utf-8")
                             newFilePath = os.path.join(wd, newFile)
                             db = Database(dataDir=args.data_dir)
-                            k = db.find(pdfFname=newFilePath)
-                            if k:
-                                raise WorkExistsException("new file {} exists in database as {}".format(newFile, k))
+                            e = db.find(pdfFname=newFilePath)
+                            if e:
+                                raise WorkExistsException("new file {} exists in database as {}".format(newFile, e.key()))
                             else:
                                 msg.info("new file: %s", newFile)
                                 entry = entryFromPdf(newFilePath) or entryFromUser(newFilePath)
                                 db.add(entry, newFilePath, [], [])
+                                printWork(entry)
                         except WorkExistsException as e:
                             msg.warning(str(e))
                         except AbortException:

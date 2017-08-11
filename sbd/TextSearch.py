@@ -54,7 +54,7 @@ class TextSearch:
 
     def search(self, term, formatter=None):
         if formatter == "html":
-            formatter = highlight.HtmlFormatter(tagname='span', classname='match')
+            formatter = highlight.HtmlFormatter(tagname='span', classname='match', between='<span class="searchSep"></span>')
         elif formatter == "ansi":
             formatter = ANSIFormatter()
         else:
@@ -64,12 +64,14 @@ class TextSearch:
             q = QueryParser("text", self.ix.schema).parse(term)
             results = searcher.search(q, limit=None)
             results.fragmenter.charlimit = None
+            results.fragmenter.maxchars = 300
+            results.fragmenter.surround = 50
             results.formatter = formatter
             pgDict = {}
 
             for hit in results:
                 sk = hit['md5']
-                r = dict(page=hit['page'], frag=hit.highlights("text"), score=hit.score)
+                r = dict(page=hit['page'], frag=hit.highlights("text",top=10), score=hit.score)
 
                 if sk in pgDict:
                     pgDict[sk].append(r)
