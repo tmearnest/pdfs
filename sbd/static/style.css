@@ -234,3 +234,12 @@ input.textInput:focus {
 .button:hover {
     background: #ec2640;
 }
+
+div.head {
+    font-size: 3em;
+    text-align: center;
+}
+
+.head > a:hover {
+    text-decoration: none;
+}
