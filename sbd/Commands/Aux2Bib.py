@@ -14,8 +14,8 @@ class Aux2Bib(Command):
         from ..TermOutput import msg
 
         db = Database(dataDir=args.data_dir)
-        auxKeys = set(re.findall(r"\\(?:bibcite|citation)\{([^}]+)\}", open(args.aux, "r").read()))
-        auxKeys = sorted(x.strip() for x in auxKeys)
+        auxCiteArgs = re.findall(r"\\(?:bibcite|citation)\{([^}]+)\}", open(args.aux, "r").read())
+        auxKeys = sorted(set(x.strip() for y in auxCiteArgs for x in y.split(',')))
 
         btexs, missing = [], []
 
