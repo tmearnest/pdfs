@@ -11,7 +11,7 @@ setup(name='sbd',
       url='https://github.com/tmearnest/sbd',
       package_data={'sbd': ['templates/*', 'static/*']},
       license='MIT License',
-      entry_points = {"console_scripts": ['sbd = sbd.EntryPoint:main']},
+      entry_points = {"console_scripts": ['sbd = sbd.Main:main']},
       install_requires = ["argcomplete", "flask", "inotify", "jinja2", 
                           "pdfminer.six", "prompt_toolkit", "python-dateutil",
                           "requests", "termcolor", "unidecode", "whoosh"])
