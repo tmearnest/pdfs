@@ -1,3 +1,4 @@
+from .Bibtex import JournalAbbr
 from .BibFormatter import BibFormatter
 from .TermOutput import msg, wrapWithColor, fg, bg, attr, stylize
 
@@ -28,7 +29,10 @@ class AnsiBib(BibFormatter):
         return _co(super().volume(), fg('yellow'))
 
     def journal(self):
-        return _co(super().journal(), fg('cyan') + attr('bold'))
+        j = super().journal()
+        if j:
+            ab = JournalAbbr()
+            return _co(ab(j), fg('cyan') + attr('bold'))
 
     def doi(self):
         return _co("doi:"+super().doi(), fg('blue'))

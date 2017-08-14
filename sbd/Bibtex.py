@@ -1,7 +1,11 @@
 import re
 import unicodedata
 import textwrap
+from pkg_resources import resource_filename
+
 from .unimap import separator_map, char_map
+from .Bases import Singleton
+
 
 bibtexTypes = ["article", "book", "booklet", "conference", "inbook", "incollection",
               "inproceedings", "manual", "mastersthesis", "misc", "phdthesis",
@@ -13,6 +17,54 @@ bibtexFields = ["author", "title", "booktitle", "series", "journal", "edition",
               "address", "chapter", "volume", "number", "pages", "year", 
               "month", "doi"]
 
+
+class JournalAbbr(metaclass=Singleton):
+    drop = ['the', 'of', 'and', '&', 'on', 'in']
+    exceptions = ['physica']
+
+    def __init__(self):
+        abbrs = dict()
+        stems = dict()
+        fname = resource_filename('sbd', 'data/LTWA_20160915.txt')
+        with open(fname, encoding='utf-16') as f:
+            f.readline()
+            for l in f:
+                l = unicodeNorm(l)
+                w, abr, lang = l.split('\t')
+                if ('eng' in lang or 'mul' in lang) and unicodeNorm(abr).lower() != 'n.a.':
+                    w = w.lower()
+                    abr = abr.lower()
+                    if w[0] == '-':
+                        pass
+                    elif w[-1] == '-':
+                        stems[w[:-1]] = abr
+                    else:
+                        abbrs[w] = abr
+                         
+        self.abbrs = abbrs
+        self.stems = stems
+
+    def stemMatch(self,x):
+        try:
+            return max((v for k,v in self.stems.items() if x.startswith(k)), key=len)
+        except ValueError:
+            pass
+
+    def abbrWord(self,w):
+        wlow = w.lower()
+        if wlow in self.exceptions:
+            return w
+        wlookup = self.abbrs.get(wlow) or self.stemMatch(wlow)
+        if wlookup:
+            return wlookup.capitalize()
+        return w
+
+    def __call__(self, s):
+        ws = s.split()
+        if len(ws) > 1:
+            return ' '.join(self.abbrWord(w) for w in ws if w.lower() not in self.drop)
+        else:
+            return s
 
 _regularizeWsRe = re.compile(r"\s+")
 def _regularizeWs(x):

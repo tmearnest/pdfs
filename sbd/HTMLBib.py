@@ -1,5 +1,5 @@
 from .BibFormatter import BibFormatter
-from .Bibtex import unicodeNorm
+from .Bibtex import unicodeNorm, JournalAbbr
 
 def authorNorm(x):
     return unicodeNorm(x).lower().replace(' ', '_')
@@ -26,7 +26,8 @@ class CtxBib(BibFormatter):
     def journal(self):
         j = super().journal()
         if j:
-            return "<i>" + j + "</i>"
+            ab = JournalAbbr()
+            return "<i>" + ab(j) + "</i>"
 
     def doi(self):
         d = super().doi()
