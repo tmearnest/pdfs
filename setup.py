@@ -6,7 +6,7 @@ if sys.version_info < (3,6):
     sys.exit("Python 3.6 or newer required")
 
 setup(
-    name='bibs',
+    name='pdfs',
     version='0.1.0',
     python_requires=">=3.6",
     packages=find_packages(),
