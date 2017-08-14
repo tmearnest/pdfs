@@ -1,12 +1,13 @@
 from .Command import Command
+from .Completers import citekeyCompleter, attachmentCompleter
 
 class View(Command):
     command = 'view'
     help = "View article PDF and attachements"
 
     def set_args(self, subparser):
-        subparser.add_argument('key', metavar='CITE_KEY', type=str)
-        subparser.add_argument('label', nargs='?', metavar='NAME', default='PDF', type=str)
+        subparser.add_argument('key', metavar='CITE_KEY', type=str).completer = citekeyCompleter
+        subparser.add_argument('label', nargs='?', metavar='NAME', default='PDF', type=str).completer = attachmentCompleter
 
     def run(self, args):
         import subprocess

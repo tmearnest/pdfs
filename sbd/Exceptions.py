@@ -6,3 +6,6 @@ class WorkExistsException(Exception):
 
 class UserException(Exception):
     pass
+
+class RepositoryException(Exception):
+    pass

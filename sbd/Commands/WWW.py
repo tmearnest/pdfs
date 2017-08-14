@@ -1,9 +1,4 @@
 from .Command import Command
-
-def mkTagList(db):
-    if db.tags:
-        return ' '.join('<a class="tags" href="/tag/{0}">{0}</a>'.format(t) for t in sorted(db.tags))
-
 class WWW(Command):
     command = 'www'
     help = "Spin up http server"
@@ -67,6 +62,10 @@ class WWW(Command):
             resp = flask.make_response(e.bibtex)
             resp.content_type = 'text/plain'
             return resp
+
+        def mkTagList(db):
+            if db.tags:
+                return ' '.join('<a class="tags" href="/tag/{0}">{0}</a>'.format(t) for t in sorted(db.tags))
 
         @flaskApp.route('/tag/<tag>')
         def listFilesByTag(tag):

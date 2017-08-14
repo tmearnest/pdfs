@@ -8,7 +8,7 @@ import hashlib
 import unicodedata
 
 from .TermOutput import msg
-from .Exceptions import WorkExistsException, UserException
+from .Exceptions import WorkExistsException, UserException, RepositoryException
 from .BaseWork import Work
 from .WorkTypes import *
 from .TextSearch import TextSearch
@@ -98,7 +98,7 @@ class Database:
         self.works = None
         dataDir = self.getDataDir(dataDir=dataDir)
         if not dataDir:
-            raise RuntimeError("Could not find a document repository here (or any parent up to /)")
+            raise RepositoryException("Could not find a document repository here (or any parent up to /)")
         self.dataDir = dataDir
         self.metaFile= os.path.join(dataDir, ".metadata.json")
         self.metaLockFile = os.path.join(dataDir, ".metadata.lck")
@@ -177,7 +177,7 @@ class Database:
             entry.fileLabels.append(os.path.basename(fn))
 
         # ensure unique cite key 
-        citeKeys = {x.key() for x in self.works}
+        citeKeys = self.citeKeys
         oldKey = entry.key()
         newKey = oldKey
         suffix = 'a'
@@ -237,3 +237,20 @@ class Database:
             entry = next(filter(lambda x: x.md5s[0] == md5, self.works))
             results.append( dict(entry=entry, score=score, frags=frags) )
         return results
+
+    @property
+    def citeKeys(self):
+        return [x.key() for x in self.works]
+
+
+    @property
+    def authors(self):
+        n = set()
+        for e in self.works:
+            au, ed = e.author(), e.editor()
+            if au:
+                n.update(authorNorm(x.split(', ')[0]) for x in au.split(' and '))
+            if ed:
+                n.update(authorNorm(x.split(', ')[0]) for x in ed.split(' and '))
+        return list(n)
+

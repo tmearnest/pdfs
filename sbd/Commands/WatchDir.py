@@ -1,11 +1,13 @@
 from .Command import Command
+from ..Exceptions import UserException
+from argcomplete.completers import DirectoriesCompleter
 
 class WatchDir(Command):
     command = 'watch'
     help = "Watch a directory for new pdf files to add"
 
     def set_args(self, subparser):
-        subparser.add_argument('dir', metavar='DIRECTORY', type=str)
+        subparser.add_argument('dir', metavar='DIRECTORY', type=str).completer = DirectoriesCompleter
 
     def run(self, args):
         import os.path
@@ -18,6 +20,9 @@ class WatchDir(Command):
         from ..AnsiBib import printWork
 
         wd = os.path.abspath(args.dir)
+        if not os.path.isdir(wd):
+            raise UserException("%s is not a directory" % wd)
+
         inot = inotify.adapters.Inotify()
         inot.add_watch(wd.encode())
         msg.info("Watching %s for new pdf files...", wd)

@@ -1,12 +1,13 @@
 from .Command import Command
+from argcomplete.completers import FilesCompleter
 
 class Aux2Bib(Command):
     command = 'aux2bib'
     help = "Read LaTeX .aux file and dump a .bib file contining all used citations"
 
     def set_args(self, subparser):
-        subparser.add_argument('aux', metavar='AUX_FILE', type=str)
-        subparser.add_argument('bib', metavar='BIB_FILE', type=str)
+        subparser.add_argument('aux', metavar='AUX_FILE', type=str).completer = FilesCompleter("aux", directories=False)
+        subparser.add_argument('bib', metavar='BIB_FILE', type=str).completer = FilesCompleter("bib", directories=False)
 
     def run(self, args):
         import re

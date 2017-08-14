@@ -1,7 +1,10 @@
 import os
 import sys
 import argparse
-from .Exceptions import AbortException, UserException, WorkExistsException
+
+import argcomplete
+
+from .Exceptions import AbortException, UserException, WorkExistsException, RepositoryException
 from .Database import Database
 from .TermOutput import msg
 from .Commands import *
@@ -20,10 +23,12 @@ def main():
 
     parser.add_argument("--data-dir", help="Path to articles directory", type=str, default=None)
 
-    subparsers = parser.add_subparsers(title='Commands')
+    subparsers = parser.add_subparsers(title='Commands', dest='_commandName')
 
     for cmdType in Registry.commands:
         cmdType().args(subparsers)
+
+    argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
     if args.debug:
@@ -55,7 +60,7 @@ def main():
     except AbortException:
         msg.error("Aborted")
         sys.exit(1)
-    except WorkExistsException as e:
+    except (WorkExistsException, RepositoryException) as e:
         msg.error(str(e))
         sys.exit(1)
     except:

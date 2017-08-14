@@ -1,4 +1,5 @@
 from .Command import Command
+from .Completers import citekeyCompleter, tagCompleter, authorCompleter
 
 class List(Command):
     command = 'list'
@@ -6,10 +7,10 @@ class List(Command):
 
     def set_args(self, subparser):
         subparser.add_argument("--title", "-t", metavar='REGEX', type=str, default=None)
-        subparser.add_argument("--author", "-a", metavar='REGEX', type=str, default=None)
+        subparser.add_argument("--author", "-a", metavar='REGEX', type=str, default=None).completer = authorCompleter
         subparser.add_argument("--year", "-y", metavar='REGEX', type=str, default=None)
-        subparser.add_argument("--tag", "-T", metavar='TAG', type=str, default=None)
-        subparser.add_argument("--key", "-k", metavar='REGEX', type=str, default=None)
+        subparser.add_argument("--tag", "-T", metavar='TAG', type=str, default=None).completer = tagCompleter
+        subparser.add_argument("--key", "-k", metavar='REGEX', type=str, default=None).completer = citekeyCompleter
 
     def run(self, args):
         import re

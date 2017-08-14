@@ -1,11 +1,12 @@
 from .Command import Command
+from .Completers import citekeyCompleter
 
 class Bibtex(Command):
     command = 'bibtex'
     help = "Dump bibtex for keys"
 
     def set_args(self, subparser):
-        subparser.add_argument('keys', metavar='CITE_KEY', nargs="*", type=str)
+        subparser.add_argument('keys', metavar='CITE_KEY', nargs="*", type=str).completer = citekeyCompleter
         subparser.add_argument('--all', '-a', action='store_true')
 
     def run(self, args):

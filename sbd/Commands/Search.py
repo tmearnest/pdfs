@@ -1,6 +1,6 @@
 from .Command import Command
 
-class List(Command):
+class Search(Command):
     command = 'search'
     help = "Search full text of PDF"
 

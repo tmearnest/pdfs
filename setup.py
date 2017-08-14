@@ -12,7 +12,6 @@ setup(name='sbd',
       package_data={'sbd': ['templates/*', 'static/*']},
       license='MIT License',
       entry_points = {"console_scripts": ['sbd = sbd.EntryPoint:main']},
-      install_requires = ["flask", "inotify", "jinja2", "pdfminer.six",
-                          "prompt_toolkit", 
-                          "python-dateutil", "requests", "termcolor",
-                          "unidecode", "whoosh"])
+      install_requires = ["argcomplete", "flask", "inotify", "jinja2", 
+                          "pdfminer.six", "prompt_toolkit", "python-dateutil",
+                          "requests", "termcolor", "unidecode", "whoosh"])
