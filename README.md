@@ -3,7 +3,7 @@ Simple Bibliography Database
 
 Work in progress.
 
-Commandline autocomplete support via [autocomplete](https://autocomplete.readthedocs.io). 
+Commandline autocomplete support via [argcomplete](https://argcomplete.readthedocs.io). 
 
 To start quickly:
 
