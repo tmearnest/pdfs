@@ -1,4 +1,4 @@
-# sbd
+# pdfs
 Simple Bibliography Database
 
 ## Introduction
@@ -12,16 +12,16 @@ directory hierarchy. For example, if I have a project based in ~/projects/foo,
 I can create a document repository by 
 
     cd ~/projects/foo
-    sbd init
+    pdfs init
 
 This creates a new direcory in ~/projects/foo called articles. All PDFs
-imported into the database will be copied here. Running `sbd` in
+imported into the database will be copied here. Running `pdfs` in
 ~/projects/foo, or any directory below it will use the repository at
 ~/projects/foo/articles.
 
 ## Commands
 
-    usage: sbd command ...
+    usage: pdfs command ...
 
 | Command | Description                                |
 |---------|--------------------------------------------|
@@ -48,4 +48,4 @@ To start quickly with zsh:
 
     autoload bashcompinit
     bashcompinit
-    eval "$(register-python-argcomplete sbd)" 
+    eval "$(register-python-argcomplete pdfs)" 

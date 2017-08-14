@@ -6,7 +6,7 @@ if sys.version_info < (3,6):
     sys.exit("Python 3.6 or newer required")
 
 setup(
-    name='sbd',
+    name='bibs',
     version='0.1.0',
     python_requires=">=3.6",
     packages=find_packages(),
@@ -23,10 +23,10 @@ setup(
     long_description=open("README.md").read().strip(),
     author='Tyler M. Earnest',
     author_email='tylere@rne.st',
-    url='https://github.com/tmearnest/sbd',
-    package_data={'sbd': ['templates/*', 'static/*', 'data/*']},
+    url='https://github.com/tmearnest/pdfs',
+    package_data={'pdfs': ['templates/*', 'static/*', 'data/*']},
     license='MIT License',
-    entry_points = {"console_scripts": ['sbd = sbd.Main:main']},
+    entry_points = {"console_scripts": ['pdfs = pdfs.Main:main']},
     zip_safe=False,
     install_requires = ["argcomplete", "colored", "flask", "inotify", "jinja2",
                         "pdfminer.six", "prompt_toolkit", "python-dateutil",

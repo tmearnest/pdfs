@@ -25,7 +25,7 @@ class JournalAbbr(metaclass=Singleton):
     def __init__(self):
         abbrs = dict()
         stems = dict()
-        fname = resource_filename('sbd', 'data/LTWA_20160915.txt')
+        fname = resource_filename('pdfs', 'data/LTWA_20160915.txt')
         with open(fname, encoding='utf-16') as f:
             f.readline()
             for l in f:
