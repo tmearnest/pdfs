@@ -38,8 +38,7 @@ class AnsiBib(BibFormatter):
         return wrapWithColor(f)
 
 def printBibliography(works):
-    for i,w in enumerate(works):
-        printWork(w, index=i+1)
+    msg("\n\n".join(AnsiBib(w, i+1).fmt() for i,w in enumerate(works)))
 
 def printWork(work, index=None):
-    print(AnsiBib(work, index).fmt())
+    msg(AnsiBib(work, index).fmt())

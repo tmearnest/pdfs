@@ -23,35 +23,37 @@ def printRule(label='', *, ch='-', width=None, color=None):
 
 def wrapWithColor(s, width=None, firstIndent=0,indent=3):
     if not width:
-        width = min(120, shutil.get_terminal_size()[0])
+        width = min(100, shutil.get_terminal_size()[0])
 
-    splt =  sum(([y for y in _wsRe.split(x) if len(y)>0] for x in _ansiRe.split(s)), [])
+    splt =  sum([[y for y in _ansiRe.split(x)] for x in _wsRe.split(s)], [])
+    splt = [x for x in splt if x]
 
     lines = []
-    line = " "*firstIndent
-    lineSize = firstIndent
     lastAnsi = '\x1b[0m'
+    breakIdx = 0
+
+    words = [" "*firstIndent, lastAnsi]
 
     for frag in splt:
         if frag[0] == '\x1b':
-            fragSize = 0
             lastAnsi = frag
-        else:
-            fragSize = len(frag)
+        elif frag[0] == ' ':
+            breakIdx = len(words)
+        words.append(frag)
 
-        if fragSize + lineSize > width:
-            lines.append(line)
-            line = " "*indent + lastAnsi + frag.strip()
-            lineSize = len(frag.strip()) + indent
-        else:
-            line += frag
-            lineSize += fragSize
+        lineSize = sum(len(w) for w in words[:-1] if w and w[0] != '\x1b')
+        if frag.strip():
+            lineSize += len(frag)
 
-    if line.strip():
-        lines.append(line)
+        if lineSize > width:
+            lines.append("".join(words[:breakIdx]).rstrip())
+            words = [" "*indent, lastAnsi] + [x for x in words[breakIdx:] if x.strip()]
 
-    return "\n".join(lines) + "\n"
+    lastLine = "".join(words).rstrip(' ')
+    if lastLine:
+        lines.append(lastLine)
 
+    return "\n".join(lines)
 
 class TermOutput(metaclass=Singleton):
     @property
@@ -100,7 +102,13 @@ class TermOutput(metaclass=Singleton):
     def error(self, msg, *args): self._plog(1, msg, args)
     def critical(self, msg, *args): self._plog(0, msg, args)
 
-    def __call__(self, *args, **kwargs):
-        return print(*args, **kwargs)
+    def __call__(self, fmt='', *args):
+        if args:
+            s = fmt % args
+            if not self.isTermO:
+                s = _ansiRe.sub('', s)
+        else:
+            s=fmt
+        print(s)
 
 msg = TermOutput()

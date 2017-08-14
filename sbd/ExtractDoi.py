@@ -45,7 +45,7 @@ def entryFromPdf(fname):
         if len(bibChunk) == 1 and chunkId == 0:
             return bibChunk[0]
         if showMsg:
-            print("Found {} putative DOIs in {}:\n".format(len(dois), fname) )
+            msg("Found %d putative DOIs in %s:\n", len(dois), fname)
             showMsg = False
 
         printBibliography(bibChunk)
@@ -66,7 +66,7 @@ def entryFromPdf(fname):
                 if not (1<= choice <= len(bibChunk)):
                     raise ValueError
                 else:
-                    print()
+                    msg()
                     return bibChunk[choice-1]
             except ValueError:
                 msg.warning("Invalid response")

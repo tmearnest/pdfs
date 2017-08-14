@@ -1,5 +1,6 @@
 import requests
 import json
+from .TermOutput import msg
 from .Cache import cachedRequest
 
 @cachedRequest("DOI")
@@ -17,5 +18,5 @@ def crossrefLookup(doi):
             raise RuntimeError("Crossref API call failed")
         return decoded['message']
     except:
-        print("doi={}\n\nresponse={}\n\ndecoded={}\n\n".format(doi,response,decoded))
+        msg("doi=%s\n\nresponse=%s\n\ndecoded=%s\n\n",doi,response,decoded)
         raise

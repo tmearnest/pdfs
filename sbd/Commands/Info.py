@@ -1,4 +1,5 @@
 from .Command import Command
+from ..TermOutput import fg, bg, attr, stylize, msg, wrapWithColor
 
 class Info(Command):
     command = 'info'
@@ -27,15 +28,22 @@ class Info(Command):
         for e in db.works:
             tagCount.update(e.tags)
 
-        fields = [("Data path", dataPath),
-                  ("Size",      "{:.3f} MB".format(dirSize/(1<<20))),
-                  ("Works",      str(nworks))]
+        lc = fg("white") + attr("dim")
+        cc = fg("white") + attr("bold")
+        vc = fg("cyan")
+        tc = fg('red') + attr('bold')
 
+        tagstr = ', '.join(stylize(t, tc) + ' (' + stylize(str(c), cc) + ')' 
+                           for t,c in sorted(tagCount.items(), key=lambda x: -x[1]))
 
-        w = max(len(x) for x in tagCount)
+        fields = [("Data path", stylize(dataPath, vc)),
+                  ("Database Size", stylize("{:.3f} MB".format(dirSize/(1<<20)), vc)),
+                  ("Number of entries", stylize(str(nworks), vc)),
+                  ("Tags", tagstr) ]
+
+        w = max(len(x) for x,_ in fields)
         w = max(1+w, 12)
 
-        print('\n'.join("{:<12s}{}".format(*x) for x in fields))
-        print("Tags:")
-        for t,c in sorted(tagCount.items(), key=lambda x: -x[1]):
-            print("{t:>{w}} {c:>3d}".format(t=t,c=c,w=w))
+        for l, v in fields:
+            msg(wrapWithColor(stylize("{l:<{w}}".format(l=l,w=w), lc) + v, indent=w))
+

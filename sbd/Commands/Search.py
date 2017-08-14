@@ -18,11 +18,11 @@ class Search(Command):
         results = db.search(' '.join(args.query), formatter="ansi")
         for i,result in enumerate(results):
             printWork(result['entry'])
-            print("Score: " + stylize("{: 4.3f}".format(result['score']), fg("yellow"), attr('bold')))
-            print()
+            msg("Score: " + stylize("{: 4.3f}".format(result['score']), fg("yellow"), attr('bold')))
+            msg()
             for frag in result['frags']:
                 printRule("page {:4d}".format(frag['page']), width=50, color=fg("blue")+attr('bold'))
-                print(frag['frag'])
+                msg(frag['frag'])
 
             if i < len(results)-1:
                 printRule()
