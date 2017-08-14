@@ -63,8 +63,7 @@ class JournalAbbr(metaclass=Singleton):
         ws = s.split()
         if len(ws) > 1:
             return ' '.join(self.abbrWord(w) for w in ws if w.lower() not in self.drop)
-        else:
-            return s
+        return s
 
 _regularizeWsRe = re.compile(r"\s+")
 def _regularizeWs(x):

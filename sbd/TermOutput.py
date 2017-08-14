@@ -96,11 +96,20 @@ class TermOutput(metaclass=Singleton):
         if self.logLevel >= lvl:
             print(self.icos[lvl], msg % args, file=sys.stderr)
 
-    def debug(self, msg, *args): self._plog(4, msg, args)
-    def info(self, msg, *args): self._plog(3, msg, args)
-    def warning(self, msg, *args): self._plog(2, msg, args)
-    def error(self, msg, *args): self._plog(1, msg, args)
-    def critical(self, msg, *args): self._plog(0, msg, args)
+    def debug(self, msg, *args): 
+        self._plog(4, msg, args)
+
+    def info(self, msg, *args): 
+        self._plog(3, msg, args)
+
+    def warning(self, msg, *args): 
+        self._plog(2, msg, args)
+
+    def error(self, msg, *args): 
+        self._plog(1, msg, args)
+
+    def critical(self, msg, *args): 
+        self._plog(0, msg, args)
 
     def __call__(self, fmt='', *args):
         if args:

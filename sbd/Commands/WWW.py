@@ -151,4 +151,3 @@ class WWW(Command):
                 raise UserException("Port {} already in use.".format(args.port))
             else:
                 raise
-

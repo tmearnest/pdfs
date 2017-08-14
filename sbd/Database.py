@@ -4,7 +4,6 @@ import os
 import os.path
 import re
 import time
-import hashlib
 import unicodedata
 
 from .TermOutput import msg
@@ -13,6 +12,7 @@ from .BaseWork import Work
 from .WorkTypes import *
 from .TextSearch import TextSearch
 from .ReadPdf import getPdfTxt, md5sum
+from .HTMLBib import authorNorm
 
 def _nameDbFile(entry, fname, idx):
     author = entry.author() or entry.editor()
@@ -224,7 +224,7 @@ class Database:
             dstFile = self.getFile(eDst, lbl)
             shutil.copyfile(srcFile, dstFile)
 
-        self.textSearch.add(eSrc.md5[0], self.getFile(eDest, "PDF"))
+        self.textSearch.add(eDst.md5s[0], getPdfTxt(self.getFile(eDst, "PDF")))
 
         self.works.append(eDst)
         self.tags.update(eDst.tags)
@@ -234,7 +234,7 @@ class Database:
     def search(self, query, formatter=None):
         results = []
         for md5, score, frags in self.textSearch.search(query, formatter):
-            entry = next(filter(lambda x: x.md5s[0] == md5, self.works))
+            entry = next(filter(lambda x, md5=md5: x.md5s[0] == md5, self.works))
             results.append( dict(entry=entry, score=score, frags=frags) )
         return results
 
@@ -253,4 +253,3 @@ class Database:
             if ed:
                 n.update(authorNorm(x.split(', ')[0]) for x in ed.split(' and '))
         return list(n)
-

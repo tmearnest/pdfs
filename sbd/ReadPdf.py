@@ -9,6 +9,7 @@ from pdfminer.pdfpage import PDFPage
 from unidecode import unidecode
 
 from .Cache import cachedRequest
+from .Exceptions import UserException
 
 def getPdfTxt(fname):
     return _getPdf(fname, cache_key=md5sum(fname))
@@ -45,5 +46,3 @@ def md5sum(fname):
         return hashlib.md5(open(fname,"rb").read()).hexdigest()
     except FileNotFoundError:
         raise UserException("File {} not found".format(fname))
-
-

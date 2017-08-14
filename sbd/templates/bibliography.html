@@ -38,7 +38,7 @@
            <div class='attLabel'> </div>
            <div class='attachments'>
               {% for a in e.attachments %}
-              <a class="attachment" href="/attachment/{{a.file}}">{{a.name}}</a>{% if not loop.last %},{% endif %}
+              <a class="attachment" target="_blank" href="/attachment/{{a.file}}">{{a.name}}</a>{% if not loop.last %},{% endif %}
               {% endfor %}
            </div>
            {% endif %}

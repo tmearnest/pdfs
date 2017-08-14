@@ -11,8 +11,6 @@ from whoosh.support.charset import accent_map
 
 from .TermOutput import msg, wrapWithColor, fg, bg, attr, stylize
 
-from .AnsiBib import wrapWithColor
-
 class ANSIFormatter(highlight.Formatter):
     wsRe = re.compile(r"\s+")
     def format_token(self, text, token, replace=False):

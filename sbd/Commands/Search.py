@@ -9,8 +9,7 @@ class Search(Command):
 
     def run(self, args):
         from ..AnsiBib import printWork
-        from ..TermOutput import msg, wrapWithColor, fg, bg, attr, stylize, printRule
-        import re
+        from ..TermOutput import msg, fg, attr, stylize, printRule
         from ..Database import Database
 
         db = Database(dataDir=args.data_dir)

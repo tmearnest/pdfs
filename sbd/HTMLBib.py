@@ -36,8 +36,7 @@ class CtxBib(BibFormatter):
     def person_fmt(self, s):
         ns = []
         last = ' '.join(s.split()[:-1])
-        for n in s.split(', '):
-            ns.append('<a class="author" href="/author/{}">{}</a>'.format(authorNorm(last), s))
+        ns.append('<a class="author" href="/author/{}">{}</a>'.format(authorNorm(last), s))
         return ' '.join(ns)
 
     def tags_fmt(self):

@@ -37,7 +37,9 @@ def main():
             from ipdb import launch_ipdb_on_exception
         except ModuleNotFoundError:
             from contextlib import contextmanager
-            launch_ipdb_on_exception = contextmanager(lambda : None)
+            def noop():
+                yield
+            launch_ipdb_on_exception = contextmanager(noop)
     else:
         msg.setup(level=args.logging_level)
 
