@@ -14,7 +14,13 @@
     <div class="sbd">
        <div class="head"><a href="/">{{article_dir}}</a></div>
        <form action="/search" method="get">
-           <input class="textInput" type="text" name="q">
+           <input class="search" type="text" name="q">
+           <select class="search" name="t">
+               <option value="text">Full text</option>
+               <option value="author">Author</option>
+               <option value="title">Title</option>
+               <option value="tag">Tag</option>
+           </select>
            <input class="button" type="submit" value="Search">
        </form>
        {% if tags %}

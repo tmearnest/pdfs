@@ -26,13 +26,8 @@ a:hover {
 }
 
 a.attachment {
-    text-decoration: none;
     font-style: italic;
     color: #41af00;
-}
-
-a.attachment:hover {
-    text-decoration: underline;
 }
 
 a.pdf {
@@ -199,9 +194,9 @@ span.fragmentPage::before {
     content: "p.";
 }
 
-input.textInput {
+select.search, input.search {
     color: #313131;
-    width: 84%;
+    width: 12%;
     padding: 0px 0px 0px 5px;
     border: 1px solid hsla(352, 53%, 90%, 1);
     background: hsla(0, 0%, 99%, 1);
@@ -212,16 +207,34 @@ input.textInput {
     outline-width:0;
 }
 
-input.textInput:focus {
+select.search {
+    height: 32px;
+    flex: 0 0 auto;
+    /* width: 12%; */
+}
+
+input.search {
+    height: 30px;
+    flex: 1 0 8em;
+    /* width: 70%; */
+}
+
+input.search:focus, select.search:focus {
     border: 1px solid hsla(352, 100%, 88%, 1);
     background: white;
     outline-width:0;
 }
 
+form {
+    display: flex;
+}
 
-.button {
+input.button {
+    flex: 0 0 auto;
+    height: 32px;
     background: #d24b5d;
     border: 1px solid #86303b;
+    margin: 2px;
     padding: 6px 25px 8px 25px;
     color: #FFF;
     border-radius: 3px;
@@ -231,7 +244,7 @@ input.textInput:focus {
     font-family: Lato;
 }
 
-.button:hover {
+input.button:hover {
     background: #ec2640;
 }
 
